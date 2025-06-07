@@ -51,38 +51,33 @@ echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 # Обновление базы пакетов
 pacman -Sy --noconfirm
 
-# Установка пакета Limine
-echo "# Установка пакета Limine"
-pacman -S --noconfirm limine
+# Установка пакетов
+pacman -S --noconfirm limine efibootmgr
 
-# Создание директории для Limine
-echo "# Создание директории для Limine"
-mkdir -p /boot/limine
+# Копирование файлов Limine
+mkdir -p /boot/EFI/limine
+cp /usr/share/limine/BOOTX64.EFI /boot/EFI/limine/
 
-# Копирование загрузочных бинарников для BIOS
-echo "# Копирование загрузочных бинарников для BIOS"
-cp /usr/share/limine/limine-bios.sys /boot/limine/
-
-# Установка Limine на диск
-echo "# Установка Limine на диск"
-limine bios-install /dev/sda
+# Создание записи в NVRAM
+efibootmgr --create --disk /dev/sda --part Y --label "Arch Linux Limine Bootloader" --loader '\EFI\limine\BOOTX64.EFI' --unicode --verbose
 
 # Генерация конфигурации Limine
-echo "# Генерация конфигурации Limine"
-cat > /boot/limine/limine.conf <<EOL
+PARTUUID=$(blkid -s PARTUUID -o value /dev/sdXY)
+cat > /boot/EFI/limine/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
 
 :Arch Linux
-  PROTOCOL=linux
-  KERNEL_PATH=boot():/vmlinuz-linux
-  INITRD_PATH=boot():/initramfs-linux.img
-  CMDLINE=root=/dev/sda1 rw quiet
-EOL
+ PROTOCOL=linux
+ KERNEL_PATH=/vmlinuz-linux
+ INITRD_PATH=/initramfs-linux.img
+ CMDLINE=root=PARTUUID=${PARTUUID} rw quiet
+EOF
 
-# Очистка
-cd /
-rm -rf /tmp/limine
+# Установка загрузчика в MBR (для BIOS-систем)
+limine bios-install /dev/sda
+
+echo "Limine успешно установлен и настроен."
 
 # --- Драйверы для виртуалки ---
 pacman -S --noconfirm linux-headers linux-virtio
