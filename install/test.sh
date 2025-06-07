@@ -74,14 +74,15 @@ CMDLINE=root=LABEL=root rw quiet
 EOF
 
 # Копируем файл загрузчика
-cp /usr/share/limine/limine-bios.sys /boot/
+mkdir -p /mnt/boot/limine
+cp /usr/share/limine/limine-bios.sys /mnt/boot/limine/
 
 if [[ ! -f /boot/limine.cfg ]]; then
     echo "limine.cfg не найден в /boot!"
     exit 1
 fi
 
-if [[ ! -f /boot/limine-bios.sys ]]; then
+if [[ ! -f /boot/limine/limine-bios.sys ]]; then
     echo "limine-bios.sys не найден в /boot!"
     exit 1
 fi
