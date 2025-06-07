@@ -8,11 +8,13 @@ PASSWORD="1234"
 DISK="/dev/sda"
 
 # --- Разметка диска ---
+echo "Разметка диска"
 sgdisk --zap-all $DISK
 dd if=/dev/zero of=$DISK bs=512 count=2048
 sgdisk -o $DISK
 
 # Создание одного корневого раздела
+echo "Создание одного корневого раздела"
 sgdisk -n 1:0:0 -t 1:8300 -c 1:"Linux Root Partition" $DISK
 
 mkfs.ext4 "${DISK}1"
@@ -20,13 +22,16 @@ mkfs.ext4 "${DISK}1"
 mount "${DISK}1" /mnt
 
 # --- Установка базовой системы ---
-pacstrap /mnt base base-devel linux linux-firmware vim networkmanager sudo git
+echo "Установка базовой системы"
+pacstrap /mnt base base-devel linux linux-headers linux-firmware nano networkmanager sudo git
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
 arch-chroot /mnt /bin/bash <<EOF
 
 # --- Локализация ---
+echo "Локализация"
+
 echo "$HOSTNAME" > /etc/hostname
 ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 hwclock --systohc
@@ -73,17 +78,17 @@ TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
 
 :Arch Linux
- PROTOCOL=linux
- KERNEL_PATH=/vmlinuz-linux
- INITRD_PATH=/initramfs-linux.img
- CMDLINE=root=PARTUUID=${PARTUUID} rw quiet
+PROTOCOL=linux
+KERNEL_PATH=/vmlinuz-linux
+INITRD_PATH=/initramfs-linux.img
+CMDLINE=root=PARTUUID=${PARTUUID} rw quiet
 EOF
 
 echo "Limine успешно установлен и настроен."
 
 # --- Драйверы для виртуалки ---
 echo "Драйверы для виртуалки"
-pacman -Sy --noconfirm linux-headers linux-virtio
+pacman -Sy --noconfirm xf86-video-vmware
 
 # --- Графика и окружение ---
 echo "Графика и окружение"
@@ -91,7 +96,7 @@ pacman -Sy --noconfirm xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd
 xfce4-pulseaudio-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-whiskermenu-plugin \
 xfce4-xkb-plugin xfconf thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman lxtask \
 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
-pulseaudio-rtp pulseaudio-zeroconf xarchiver unrar unzip p7zip numlockx firefox rofi nitrogen i3-wm
+pulseaudio-rtp pulseaudio-zeroconf xarchiver unrar unzip p7zip numlockx firefox rofi nitrogen i3-wm bash-completion
 
 # Менеджер входа ly
 echo "Менеджер входа ly"
