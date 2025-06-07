@@ -54,17 +54,22 @@ echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 # Обновление базы пакетов
 pacman -Sy --noconfirm
 
-# Установка limine
-pacman -S --noconfirm limine efibootmgr
+# Установка зависимостей и сборка Limine
+pacman -S --noconfirm git xz base-devel
 
-# Копируем EFI-бинарь и файл загрузчика
+cd /tmp
+git clone https://github.com/limine-bootloader/limine.git
+cd limine
+make
+
+# Установка загрузочных бинарников
 mkdir -p /boot/EFI/BOOT
-cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI
-cp /usr/share/limine/limine.sys /boot/
-cp /usr/share/limine/limine-bios.sys /boot/  # опционально, для BIOS
+cp limine.sys /boot/
+cp limine-bios.sys /boot/            # для BIOS (опционально)
+cp BOOTX64.EFI /boot/EFI/BOOT/
 
-# Генерация конфигурации
-PARTUUID=$(blkid -s PARTUUID -o value "${DISK}2")
+# Генерация limine.cfg
+PARTUUID=$(blkid -s PARTUUID -o value "$(findmnt / -o SOURCE -n)")
 cat > /boot/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
@@ -73,14 +78,16 @@ DEFAULT_ENTRY=Arch Linux
     PROTOCOL=linux
     KERNEL_PATH=/vmlinuz-linux
     INITRD_PATH=/initramfs-linux.img
-    CMDLINE=root=PARTUUID=${PARTUUID} rw
+    CMDLINE=root=PARTUUID=${PARTUUID} rw quiet
 EOF
 
-# Создание загрузочной записи UEFI
-efibootmgr --create --disk $DISK --part 1 --label "Arch Linux Limine" \
+# Создание UEFI-записи вручную
+efibootmgr --create --disk "$DISK" --part 1 --label "Arch Linux (Limine)" \
   --loader '\EFI\BOOT\BOOTX64.EFI' || echo "! Не удалось создать запись efibootmgr"
 
-# Limine-бинарь для BIOS — пока оставляем в /boot
+# Очистка
+cd /
+rm -rf /tmp/limine
 
 # --- Конец блока Limine ---
 
