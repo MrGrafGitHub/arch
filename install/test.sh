@@ -10,12 +10,13 @@ DISK="/dev/sda"
 
 # Разметка с ext4 /boot
 parted -s "$DISK" mklabel gpt
-parted -s "$DISK" mkpart primary ext4 1MiB 300MiB
-parted -s "$DISK" mkpart primary ext4 300MiB 100%
+parted -s "$DISK" mkpart primary fat32 1MiB 300MiB   # /boot
+parted -s "$DISK" mkpart primary ext4 300MiB 100%   # /
 
-mkfs.ext4 "${DISK}1"
+mkfs.fat -F32 "${DISK}1"
 mkfs.ext4 "${DISK}2"
 
+# Монтируем основную систему
 mount "${DISK}2" /mnt
 mkdir -p /mnt/boot
 mount "${DISK}1" /mnt/boot
@@ -59,6 +60,8 @@ echo "Установка Limine"
 
 # Убедимся, что директория /boot существует
 mkdir -p /boot
+
+mkinitcpio -P
 
 # Копируем файл загрузчика
 cp /usr/share/limine/limine-bios.sys /boot/
