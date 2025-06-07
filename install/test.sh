@@ -8,21 +8,14 @@ PASSWORD="1234"
 DISK="/dev/sda"
 
 # --- Разметка диска ---
-echo "Разметка диска: $DISK"
+echo "Разметка диска"
 
 # Очистка
-echo "Очистка"
-sgdisk --zap-all $DISK
-dd if=/dev/zero of=$DISK bs=512 count=2048
-sgdisk -o $DISK
-
-# Получаем размер диска в байтах
-DISK_SIZE=$(blockdev --getsize64 $DISK)
-echo "Размер диска: $DISK_SIZE байт"
+# Создаём GPT таблицу
+parted -s $DISK mklabel gpt
 
 # Создаём один раздел на весь диск
-echo "Создание одного корневого раздела на весь диск"
-sgdisk -n 1:0:+80G -t 1:8300 -c 1:"Linux Root Partition" $DISK
+parted -s $DISK mkpart primary ext4 1MiB 100%
 
 # Форматируем
 mkfs.ext4 "${DISK}1"
@@ -31,7 +24,7 @@ mkfs.ext4 "${DISK}1"
 mount "${DISK}1" /mnt
 
 # --- Установка базовой системы ---
-echo "Установка базовы"
+echo "Установка базовой системы"
 pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano networkmanager sudo git \
 xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd xfce4-panel xf86-video-vmware ly dbus \
 xfce4-pulseaudio-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-whiskermenu-plugin \
@@ -96,6 +89,7 @@ CMDLINE=root=PARTUUID=${PARTUUID} rw quiet
 EOF
 
 echo "Limine успешно установлен и настроен."
+
 
 # Менеджер входа ly
 echo "Менеджер входа ly"
