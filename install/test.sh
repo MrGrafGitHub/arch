@@ -4,20 +4,18 @@ set -e
 # --- Настройки ---
 HOSTNAME="arch-vm"
 USERNAME="mrgraf"
-USERPASS="0502"
+USERPASS="1234"
 ROOTPASS="root"
 DISK="/dev/sda"
 
-# --- Разметка диска ---
-echo "Разметка диска: /boot (FAT32) + / (ext4)"
+# Разметка с ext4 /boot
 parted -s "$DISK" mklabel gpt
-parted -s "$DISK" mkpart primary fat32 1MiB 300MiB   # /boot
-parted -s "$DISK" mkpart primary ext4 300MiB 100%   # /
+parted -s "$DISK" mkpart primary ext4 1MiB 300MiB
+parted -s "$DISK" mkpart primary ext4 300MiB 100%
 
-mkfs.fat -F32 "${DISK}1"
+mkfs.ext4 "${DISK}1"
 mkfs.ext4 "${DISK}2"
 
-# Монтируем основную систему
 mount "${DISK}2" /mnt
 mkdir -p /mnt/boot
 mount "${DISK}1" /mnt/boot
@@ -95,6 +93,8 @@ echo "Limine успешно установлен и настроен."
 # --- Менеджер входа ly ---
 pacman -Sy --noconfirm ly
 systemctl enable ly
+
+
 
 EOF_CHROOT
 
