@@ -3,24 +3,16 @@ set -e
 
 # --- Настройки ---
 HOSTNAME="arch-vm"
-USERNAME="user"
-PASSWORD="1234"
+USERNAME="mrgraf"
+USERPASS="0502"
+ROOTPASS="root"
 DISK="/dev/sda"
 
 # --- Разметка диска ---
 echo "Разметка диска"
-
-# Очистка
-# Создаём GPT таблицу
 parted -s $DISK mklabel gpt
-
-# Создаём один раздел на весь диск
 parted -s $DISK mkpart primary ext4 1MiB 100%
-
-# Форматируем
 mkfs.ext4 "${DISK}1"
-
-# Монтируем
 mount "${DISK}1" /mnt
 
 # --- Установка базовой системы ---
@@ -32,14 +24,12 @@ xfce4-xkb-plugin xfconf thunar thunar-archive-plugin thunar-media-tags-plugin th
 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
 pulseaudio-rtp pulseaudio-zeroconf xarchiver unrar unzip p7zip numlockx firefox rofi nitrogen i3-wm bash-completion
 
-
 genfstab -U /mnt >> /mnt/etc/fstab
 
-arch-chroot /mnt /bin/bash <<EOF
+# --- Настройки внутри chroot ---
+arch-chroot /mnt /bin/bash <<EOF_CHROOT
 
 # --- Локализация ---
-echo "Локализация"
-
 echo "$HOSTNAME" > /etc/hostname
 ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 hwclock --systohc
@@ -48,35 +38,27 @@ echo "LANG=ru_RU.UTF-8" > /etc/locale.conf
 echo "ru_RU.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
 
-# Консоль (поддержка кириллицы)
 echo "KEYMAP=ru" > /etc/vconsole.conf
 echo "FONT=cyr-sun16" >> /etc/vconsole.conf
 
-# Сеть
-echo "Сеть"
+# --- Сеть ---
 systemctl enable NetworkManager
+systemctl enable dbus
 
-# Пользователи
-echo "Пользователи"
-echo root:$PASSWORD | chpasswd
-useradd -m -G wheel $USERNAME
-echo $USERNAME:$PASSWORD | chpasswd
-echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
+# --- Пользователи ---
+echo "root:${ROOTPASS}" | chpasswd
+useradd -m -G wheel ${USERNAME}
+echo "${USERNAME}:${USERPASS}" | chpasswd
+echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
 
-# Обновление базы пакетов
-echo "Обновление базы пакетов"
-pacman -Sy --noconfirm
+# --- Обновление ---
+pacman -Syu --noconfirm
 
-# Установка Limine в MBR диска
-echo "Установка Limine в MBR диска"
-limine bios-install /dev/sda
+# --- Limine ---
+limine bios-install $DISK
+UUID=\$(blkid -s UUID -o value ${DISK}1)
 
-# Получаем UUID корневого раздела
-echo "Получаем UUID корневого раздела"
-UUID=$(blkid -s UUID -o value /dev/sda1)
-
-# Конфиг для Limine в /boot/limine.cfg
-echo "Конфиг для Limine в /boot/limine.cfg"
+mkdir -p /boot
 cat > /boot/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
@@ -85,35 +67,31 @@ DEFAULT_ENTRY=Arch Linux
 PROTOCOL=linux
 KERNEL_PATH=/vmlinuz-linux
 INITRD_PATH=/initramfs-linux.img
-CMDLINE=root=UUID=${UUID} rw quiet
+CMDLINE=root=UUID=\${UUID} rw quiet
 EOF
 
 echo "Limine успешно установлен и настроен."
 
-
-# Менеджер входа ly
-echo "Менеджер входа ly"
+# --- Менеджер входа ly ---
 pacman -Sy --noconfirm ly
 systemctl enable ly
-systemctl enable dbus
 
 # --- Yay (AUR helper) ---
-echo "Yay (AUR helper)"
-sudo -u $USERNAME bash -c "
+sudo -u $USERNAME bash -c '
 cd /home/$USERNAME
 git clone https://aur.archlinux.org/yay.git
 cd yay
 makepkg -si --noconfirm
-"
+'
+chown -R $USERNAME:$USERNAME /home/$USERNAME
 
 # --- Автозапуск XFCE ---
-echo "Автозапуск XFCE"
 echo "exec startxfce4" > /home/$USERNAME/.xinitrc
 chown $USERNAME:$USERNAME /home/$USERNAME/.xinitrc
 
-EOF
+EOF_CHROOT
 
 # --- Финал ---
-echo "Финал"
+echo "Финал: размонтирование и завершение"
 umount -R /mnt
 echo "Установка завершена. Можно перезагружаться!"
