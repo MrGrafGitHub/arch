@@ -61,6 +61,13 @@ limine bios-install $DISK
 # Копируем limine-bios.sys (ОБЯЗАТЕЛЬНО!)
 cp /usr/share/limine/limine-bios.sys /boot/
 
+# Проверка, что файл на месте
+if [[ ! -f /boot/limine-bios.sys ]]; then
+    echo "XXX Ошибка: limine-bios.sys НЕ найден в /boot!"
+    echo "!!!  Загрузка не будет работать. Проверь копирование!"
+    exit 1
+fi
+
 # Получаем UUID корневого раздела
 UUID=$(blkid -s UUID -o value ${DISK}1)
 
