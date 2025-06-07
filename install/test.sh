@@ -13,8 +13,8 @@ parted -s "$DISK" mklabel gpt
 parted -s "$DISK" mkpart primary fat32 1MiB 300MiB   # /boot
 parted -s "$DISK" mkpart primary ext4 300MiB 100%   # /
 
-mkfs.fat -F32 "${DISK}1"
-mkfs.ext4 "${DISK}2"
+mkfs.fat -F32 -n boot "${DISK}1"
+mkfs.ext4 -L root "${DISK}2"
 
 # Монтируем основную систему
 mount "${DISK}2" /mnt
@@ -26,6 +26,20 @@ echo "Установка базовой системы"
 pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano networkmanager sudo git bash-completion
 
 genfstab -U /mnt >> /mnt/etc/fstab
+
+# Создаём конфиг Limine
+UUID=$(blkid -s UUID -o value ${DISK}2)
+
+cat > /mnt/limine.cfg <<EOF
+TIMEOUT=5
+DEFAULT_ENTRY=Arch Linux
+
+:Arch Linux
+PROTOCOL=linux
+KERNEL_PATH=/vmlinuz-linux
+INITRD_PATH=/initramfs-linux.img
+CMDLINE=root=LABEL=root rw quiet
+EOF
 
 # --- Настройки внутри chroot ---
 arch-chroot /mnt /bin/bash <<EOF_CHROOT
@@ -55,38 +69,24 @@ echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
 # --- Обновление ---
 pacman -Syu --noconfirm
 
-# --- Limine ---
+# --- СТАВИМ ЗАГРУЗЧИК Limine ---
 echo "Установка Limine"
-
-# Убедимся, что директория /boot существует
-mkdir -p /boot
 
 mkinitcpio -P
 
 # Копируем файл загрузчика
+cp /mnt/limine.cfg /boot/limine.cfg
 cp /usr/share/limine/limine-bios.sys /boot/
 
-# Проверка, что файл на месте
-if [[ ! -f /boot/limine-bios.sys ]]; then
-    echo "XXX Ошибка: limine-bios.sys НЕ найден в /boot!"
-    echo "!!!  Загрузка не будет работать. Проверь копирование!"
+if [[ ! -f /boot/limine.cfg ]]; then
+    echo "limine.cfg не найден в /boot!"
     exit 1
 fi
 
-# Получаем UUID корневого раздела
-UUID=\$(blkid -s UUID -o value ${DISK}2)
-
-# Создаём конфиг Limine
-cat > /boot/limine.cfg <<EOF
-TIMEOUT=5
-DEFAULT_ENTRY=Arch Linux
-
-:Arch Linux
-PROTOCOL=linux
-KERNEL_PATH=/vmlinuz-linux
-INITRD_PATH=/initramfs-linux.img
-CMDLINE=root=UUID=\${UUID} rw quiet
-EOF
+if [[ ! -f /boot/limine-bios.sys ]]; then
+    echo "limine-bios.sys не найден в /boot!"
+    exit 1
+fi
 
 # Устанавливаем Limine
 limine bios-install $DISK
