@@ -68,10 +68,16 @@ cat > /boot/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
 
+# Генерация limine.cfg
+cat > /boot/limine.cfg <<EOF
+TIMEOUT=5
+DEFAULT_ENTRY=Arch Linux
+
 :Arch Linux
-  PROTOCOL=linux
-  KERNEL_PATH=/vmlinuz-linux
-  CMDLINE=root=/dev/sda1 rw quiet
+ PROTOCOL=linux
+ KERNEL_PATH=/vmlinuz-linux
+ INITRD_PATH=/initramfs-linux.img
+ CMDLINE=root=/dev/sda1 rw quiet
 EOF
 
 # Установка Limine
