@@ -8,14 +8,18 @@ PASSWORD="1234"
 DISK="/dev/sda"
 
 # --- Разметка диска ---
-# Создаём GPT таблицу
-echo "Разметка диска \n Создаём GPT таблицу"
-parted -s $DISK mklabel gpt
+echo "Разметка диска с parted"
 
-# Создаём один раздел на весь диск
+# Очистка таблицы разделов (создадим MBR)
+parted -s $DISK mklabel msdos
+
+# Создаём раздел с 1MiB до конца диска (оставляем немного пространства в начале)
 parted -s $DISK mkpart primary ext4 1MiB 100%
 
-# Форматируем
+# Делаем раздел загрузочным (только для MBR)
+parted -s $DISK set 1 boot on
+
+# Форматируем раздел
 mkfs.ext4 "${DISK}1"
 
 # Монтируем
