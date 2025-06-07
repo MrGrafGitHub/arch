@@ -76,7 +76,7 @@ EOF
 
 # Копируем файл загрузчика
 
-cp /usr/share/limine/limine-bios.sys /mnt/boot/limine/
+cp /usr/share/limine/limine-bios.sys /boot/limine/
 
 if [[ ! -f /boot/limine.cfg ]]; then
     echo "limine.cfg не найден в /boot!"
