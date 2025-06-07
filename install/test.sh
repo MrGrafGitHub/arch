@@ -64,7 +64,7 @@ mkinitcpio -P
 mkdir -p /boot/limine
 
 # Создаём конфиг Limine
-cat > /boot/limine.conf <<EOF
+cat > /boot/limine/limine.conf <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
 
@@ -81,7 +81,7 @@ cp /usr/share/limine/limine-bios-cd.bin /boot/limine/
 cp /usr/share/limine/limine-uefi-cd.bin /boot/limine/
 
 # Проверим наличие
-if [[ ! -f /boot/limine.conf ]]; then
+if [[ ! -f /boot/limine/limine.conf ]]; then
     echo "limine.conf не найден в /boot!"
     exit 1
 fi
