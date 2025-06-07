@@ -63,14 +63,14 @@ mkdir -p /boot/limine
 
 # Создаём конфиг Limine
 cat > /boot/limine/limine.conf <<EOF
-TIMEOUT=5
-DEFAULT_ENTRY=Arch Linux
+/+Arch Linux
+comment: loader linux
 
-:Arch Linux
-PROTOCOL=linux
-KERNEL_PATH=/vmlinuz-linux
-INITRD_PATH=/initramfs-linux.img
-CMDLINE=root=LABEL=root rw quiet
+//Linux
+protocol: linux
+path: boot():/vmlinuz-linux
+cmdline: root=LABEL=root rw quiet
+module_path: boot():/initramfs-linux.img
 EOF
 
 # Копируем необходимые файлы
