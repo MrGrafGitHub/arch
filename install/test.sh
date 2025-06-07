@@ -11,6 +11,7 @@ DISK="/dev/sda"
 echo "Разметка диска: $DISK"
 
 # Очистка
+echo "Очистка"
 sgdisk --zap-all $DISK
 dd if=/dev/zero of=$DISK bs=512 count=2048
 sgdisk -o $DISK
@@ -21,7 +22,7 @@ echo "Размер диска: $DISK_SIZE байт"
 
 # Создаём один раздел на весь диск
 echo "Создание одного корневого раздела на весь диск"
-sgdisk -n 1:0:0 -t 1:8300 -c 1:"Linux Root Partition" $DISK
+sgdisk -n 1:0:+80G -t 1:8300 -c 1:"Linux Root Partition" $DISK
 
 # Форматируем
 mkfs.ext4 "${DISK}1"
@@ -30,8 +31,14 @@ mkfs.ext4 "${DISK}1"
 mount "${DISK}1" /mnt
 
 # --- Установка базовой системы ---
-echo "Установка базовой системы"
-pacstrap /mnt base base-devel linux linux-headers linux-firmware nano networkmanager sudo git
+echo "Установка базовы"
+pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano networkmanager sudo git \
+xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd xfce4-panel xf86-video-vmware ly dbus \
+xfce4-pulseaudio-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-whiskermenu-plugin \
+xfce4-xkb-plugin xfconf thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman lxtask \
+pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
+pulseaudio-rtp pulseaudio-zeroconf xarchiver unrar unzip p7zip numlockx firefox rofi nitrogen i3-wm bash-completion
+
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -67,10 +74,6 @@ echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 echo "Обновление базы пакетов"
 pacman -Sy --noconfirm
 
-# Установка пакета limine
-echo "Установка пакета limine"
-pacman -S --noconfirm limine
-
 # Установка Limine в MBR диска
 echo "Установка Limine в MBR диска"
 limine bios-install /dev/sda
@@ -94,21 +97,8 @@ EOF
 
 echo "Limine успешно установлен и настроен."
 
-# --- Драйверы для виртуалки ---
-echo "Драйверы для виртуалки"
-pacman -Sy --noconfirm xf86-video-vmware
-
-# --- Графика и окружение ---
-echo "Графика и окружение"
-pacman -Sy --noconfirm xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd xfce4-panel \
-xfce4-pulseaudio-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-whiskermenu-plugin \
-xfce4-xkb-plugin xfconf thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman lxtask \
-pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
-pulseaudio-rtp pulseaudio-zeroconf xarchiver unrar unzip p7zip numlockx firefox rofi nitrogen i3-wm bash-completion
-
 # Менеджер входа ly
 echo "Менеджер входа ly"
-pacman -Sy --noconfirm ly dbus
 systemctl enable ly
 systemctl enable dbus
 
