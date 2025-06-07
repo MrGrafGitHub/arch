@@ -19,7 +19,6 @@ mkfs.ext4 -L root "${DISK}2"
 # Монтируем основную систему
 mount "${DISK}2" /mnt
 mkdir -p /mnt/boot
-mkdir -p /mnt/boot/limine
 mount "${DISK}1" /mnt/boot
 
 # --- Установка базовой системы ---
@@ -61,8 +60,10 @@ echo "Установка Limine"
 
 mkinitcpio -P
 
-# Создаём конфиг Limine
+# Убедимся, что есть директория /boot/limine
+mkdir -p /boot/limine
 
+# Создаём конфиг Limine
 cat > /boot/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
@@ -74,17 +75,19 @@ INITRD_PATH=/initramfs-linux.img
 CMDLINE=root=LABEL=root rw quiet
 EOF
 
-# Копируем файл загрузчика
-
+# Копируем необходимые файлы
 cp /usr/share/limine/limine-bios.sys /boot/limine/
+cp /usr/share/limine/limine-bios-cd.bin /boot/limine/
+cp /usr/share/limine/limine-uefi-cd.bin /boot/limine/
 
+# Проверим наличие
 if [[ ! -f /boot/limine.cfg ]]; then
     echo "limine.cfg не найден в /boot!"
     exit 1
 fi
 
 if [[ ! -f /boot/limine/limine-bios.sys ]]; then
-    echo "limine-bios.sys не найден в /boot!"
+    echo "limine-bios.sys не найден в /boot/limine!"
     exit 1
 fi
 
@@ -92,6 +95,7 @@ fi
 limine bios-install $DISK
 
 echo "Limine успешно установлен и настроен."
+
 
 # --- Менеджер входа ly ---
 pacman -Sy --noconfirm ly
