@@ -8,17 +8,17 @@ PASSWORD="1234"
 DISK="/dev/sda"
 
 # --- Разметка диска ---
-echo "Разметка диска"
-sgdisk --zap-all $DISK
-dd if=/dev/zero of=$DISK bs=512 count=2048
-sgdisk -o $DISK
+# Создаём GPT таблицу
+echo "Разметка диска \n Создаём GPT таблицу"
+parted -s $DISK mklabel gpt
 
-# Создание одного корневого раздела
-echo "Создание одного корневого раздела"
-sgdisk -n 1:0:0 -t 1:8300 -c 1:"Linux Root Partition" $DISK
+# Создаём один раздел на весь диск
+parted -s $DISK mkpart primary ext4 1MiB 100%
 
+# Форматируем
 mkfs.ext4 "${DISK}1"
 
+# Монтируем
 mount "${DISK}1" /mnt
 
 # --- Установка базовой системы ---
