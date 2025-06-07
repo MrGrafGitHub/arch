@@ -64,15 +64,15 @@ mkinitcpio -P
 mkdir -p /boot/limine
 
 # Создаём конфиг Limine
-cat > /boot/limine.cfg <<EOF
-/+Arch Linux
-comment: loader linux
+cat > /boot/limine.conf <<EOF
+TIMEOUT=5
+DEFAULT_ENTRY=Arch Linux
 
-//Linux
-protocol: linux
-path: boot():/vmlinuz-linux
-cmdline: root=LABEL=root rw quiet
-module_path: boot():/initramfs-linux.img
+:Arch Linux
+PROTOCOL=linux
+KERNEL_PATH=/vmlinuz-linux
+INITRD_PATH=/initramfs-linux.img
+CMDLINE=root=LABEL=root rw quiet
 EOF
 
 # Копируем необходимые файлы
@@ -81,8 +81,8 @@ cp /usr/share/limine/limine-bios-cd.bin /boot/limine/
 cp /usr/share/limine/limine-uefi-cd.bin /boot/limine/
 
 # Проверим наличие
-if [[ ! -f /boot/limine.cfg ]]; then
-    echo "limine.cfg не найден в /boot!"
+if [[ ! -f /boot/limine.conf ]]; then
+    echo "limine.conf не найден в /boot!"
     exit 1
 fi
 
