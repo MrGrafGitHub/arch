@@ -4,7 +4,7 @@ set -e
 # --- Настройки ---
 HOSTNAME="arch-vm"
 USERNAME="mrgraf"
-USERPASS="1234"
+USERPASS="0502"
 ROOTPASS="root"
 DISK="/dev/sda"
 
@@ -94,10 +94,6 @@ cd yay
 makepkg -si --noconfirm
 '
 chown -R $USERNAME:$USERNAME /home/$USERNAME
-
-# --- Автозапуск XFCE ---
-echo "exec startxfce4" > /home/$USERNAME/.xinitrc
-chown $USERNAME:$USERNAME /home/$USERNAME/.xinitrc
 
 EOF_CHROOT
 
