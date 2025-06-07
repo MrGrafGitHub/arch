@@ -4,7 +4,7 @@ set -e
 # --- Настройки ---
 HOSTNAME="arch-vm"
 USERNAME="mrgraf"
-USERPASS="0502"
+USERPASS="1234"
 ROOTPASS="root"
 DISK="/dev/sda"
 
@@ -55,9 +55,16 @@ echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
 pacman -Syu --noconfirm
 
 # --- Limine ---
+echo "Установка Limine"
 limine bios-install $DISK
-UUID=\$(blkid -s UUID -o value ${DISK}1)
 
+# Копируем limine-bios.sys (ОБЯЗАТЕЛЬНО!)
+cp /usr/share/limine/limine-bios.sys /boot/
+
+# Получаем UUID корневого раздела
+UUID=$(blkid -s UUID -o value ${DISK}1)
+
+# Создаём конфиг Limine
 mkdir -p /boot
 cat > /boot/limine.cfg <<EOF
 TIMEOUT=5
@@ -67,10 +74,11 @@ DEFAULT_ENTRY=Arch Linux
 PROTOCOL=linux
 KERNEL_PATH=/vmlinuz-linux
 INITRD_PATH=/initramfs-linux.img
-CMDLINE=root=UUID=\${UUID} rw quiet
+CMDLINE=root=UUID=${UUID} rw quiet
 EOF
 
 echo "Limine успешно установлен и настроен."
+
 
 # --- Менеджер входа ly ---
 pacman -Sy --noconfirm ly
