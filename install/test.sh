@@ -8,18 +8,22 @@ PASSWORD="1234"
 DISK="/dev/sda"
 
 # --- Разметка диска ---
-echo "Разметка диска с parted"
+echo "Разметка диска: $DISK"
 
-# Очистка таблицы разделов (создадим MBR)
-parted -s $DISK mklabel msdos
+# Очистка
+sgdisk --zap-all $DISK
+dd if=/dev/zero of=$DISK bs=512 count=2048
+sgdisk -o $DISK
 
-# Создаём раздел с 1MiB до конца диска (оставляем немного пространства в начале)
-parted -s $DISK mkpart primary ext4 1MiB 100%
+# Получаем размер диска в байтах
+DISK_SIZE=$(blockdev --getsize64 $DISK)
+echo "Размер диска: $DISK_SIZE байт"
 
-# Делаем раздел загрузочным (только для MBR)
-parted -s $DISK set 1 boot on
+# Создаём один раздел на весь диск
+echo "Создание одного корневого раздела на весь диск"
+sgdisk -n 1:0:0 -t 1:8300 -c 1:"Linux Root Partition" $DISK
 
-# Форматируем раздел
+# Форматируем
 mkfs.ext4 "${DISK}1"
 
 # Монтируем
