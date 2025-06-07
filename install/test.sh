@@ -9,11 +9,18 @@ ROOTPASS="root"
 DISK="/dev/sda"
 
 # --- Разметка диска ---
-echo "Разметка диска"
-parted -s $DISK mklabel gpt
-parted -s $DISK mkpart primary ext4 1MiB 100%
-mkfs.ext4 "${DISK}1"
-mount "${DISK}1" /mnt
+echo "Разметка диска: /boot (FAT32) + / (ext4)"
+parted -s "$DISK" mklabel gpt
+parted -s "$DISK" mkpart primary fat32 1MiB 300MiB   # /boot
+parted -s "$DISK" mkpart primary ext4 300MiB 100%   # /
+
+mkfs.fat -F32 "${DISK}1"
+mkfs.ext4 "${DISK}2"
+
+# Монтируем основную систему
+mount "${DISK}2" /mnt
+mkdir -p /mnt/boot
+mount "${DISK}1" /mnt/boot
 
 # --- Установка базовой системы ---
 echo "Установка базовой системы"
@@ -50,9 +57,12 @@ echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
 pacman -Syu --noconfirm
 
 # --- Limine ---
+echo "Установка Limine"
 
+# Убедимся, что директория /boot существует
+mkdir -p /boot
 
-# Копируем limine-bios.sys (ОБЯЗАТЕЛЬНО!)
+# Копируем файл загрузчика
 cp /usr/share/limine/limine-bios.sys /boot/
 
 # Проверка, что файл на месте
@@ -63,10 +73,9 @@ if [[ ! -f /boot/limine-bios.sys ]]; then
 fi
 
 # Получаем UUID корневого раздела
-UUID=$(blkid -s UUID -o value ${DISK}1)
+UUID=\$(blkid -s UUID -o value ${DISK}2)
 
 # Создаём конфиг Limine
-mkdir -p /boot
 cat > /boot/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
@@ -75,30 +84,17 @@ DEFAULT_ENTRY=Arch Linux
 PROTOCOL=linux
 KERNEL_PATH=/vmlinuz-linux
 INITRD_PATH=/initramfs-linux.img
-CMDLINE=root=UUID=${UUID} rw quiet
+CMDLINE=root=UUID=\${UUID} rw quiet
 EOF
 
-
-
-echo "Установка Limine"
+# Устанавливаем Limine
 limine bios-install $DISK
 
-
 echo "Limine успешно установлен и настроен."
-
 
 # --- Менеджер входа ly ---
 pacman -Sy --noconfirm ly
 systemctl enable ly
-
-# --- Yay (AUR helper) ---
-sudo -u $USERNAME bash -c '
-cd /home/$USERNAME
-git clone https://aur.archlinux.org/yay.git
-cd yay
-makepkg -si --noconfirm
-'
-chown -R $USERNAME:$USERNAME /home/$USERNAME
 
 EOF_CHROOT
 
