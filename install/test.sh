@@ -64,7 +64,7 @@ mkinitcpio -P
 mkdir -p /boot/limine
 
 # Создаём конфиг Limine
-cat > /boot/limine.cfg <<EOF
+cat > /boot/limine/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
 
@@ -81,7 +81,7 @@ cp /usr/share/limine/limine-bios-cd.bin /boot/limine/
 cp /usr/share/limine/limine-uefi-cd.bin /boot/limine/
 
 # Проверим наличие
-if [[ ! -f /boot/limine.cfg ]]; then
+if [[ ! -f /boot/limine/limine.cfg ]]; then
     echo "limine.cfg не найден в /boot!"
     exit 1
 fi
@@ -96,6 +96,11 @@ limine bios-install $DISK
 
 echo "Limine успешно установлен и настроен."
 
+echo "--- Содержимое /boot:"
+ls -lh /boot || echo "!!! /boot не найден"
+
+echo "--- Содержимое /boot/limine:"
+ls -lh /boot/limine || echo "!!! /boot/limine не найден"
 
 # --- Менеджер входа ly ---
 pacman -Sy --noconfirm ly
