@@ -62,7 +62,7 @@ cp /usr/share/limine/BOOTX64.EFI /boot/EFI/limine/
 efibootmgr --create --disk /dev/sda --part Y --label "Arch Linux Limine Bootloader" --loader '\EFI\limine\BOOTX64.EFI' --unicode --verbose
 
 # Генерация конфигурации Limine
-PARTUUID=$(blkid -s PARTUUID -o value /dev/sdXY)
+PARTUUID=$(blkid -s PARTUUID -o value /dev/sda)
 cat > /boot/EFI/limine/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
