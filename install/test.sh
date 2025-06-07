@@ -58,8 +58,6 @@ pacman -Syu --noconfirm
 # --- СТАВИМ ЗАГРУЗЧИК Limine ---
 echo "Установка Limine"
 
-mkinitcpio -P
-
 # Убедимся, что есть директория /boot/limine
 mkdir -p /boot/limine
 
