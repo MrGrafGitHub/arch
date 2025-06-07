@@ -1,2 +1,14 @@
-# arch
-script instalation
+# Arch Linux Installer
+
+## Описание
+Репозиторий с кастомным установочным скриптом Arch Linux.
+
+## Режимы установки
+- `test` — для виртуальной машины (QEMU, VirtualBox и др.), минимальная установка.
+- `prod` — для реального железа с полной конфигурацией.
+
+## Запуск
+```bash
+./install.sh test
+# или
+./install.sh prod
