@@ -51,26 +51,40 @@ useradd -m -G wheel $USERNAME
 echo $USERNAME:$PASSWORD | chpasswd
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 
+# Обновление базы пакетов
+pacman -Sy --noconfirm
+
 # Установка limine
-pacman -S --noconfirm limine
+pacman -S --noconfirm limine efibootmgr
 
-# Копируем EFI-файлы в ESP
+# Копируем EFI-бинарь и файл загрузчика
 mkdir -p /boot/EFI/BOOT
-cp /usr/lib/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI
-cp /usr/lib/limine/limine.sys /boot/
+cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI
+cp /usr/share/limine/limine.sys /boot/
+cp /usr/share/limine/limine-bios.sys /boot/  # опционально, для BIOS
 
-# Создаём конфиг limine
+# Генерация конфигурации
+PARTUUID=$(blkid -s PARTUUID -o value "${DISK}2")
 cat > /boot/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
 
 :Arch Linux
-    COMMENT=Default Arch install
     PROTOCOL=linux
     KERNEL_PATH=/vmlinuz-linux
     INITRD_PATH=/initramfs-linux.img
-    CMDLINE=root=PARTUUID=$(blkid -s PARTUUID -o value ${DISK}2) rw
+    CMDLINE=root=PARTUUID=${PARTUUID} rw
 EOF
+
+# Создание загрузочной записи UEFI
+efibootmgr --create --disk $DISK --part 1 --label "Arch Linux Limine" \
+  --loader '\EFI\BOOT\BOOTX64.EFI' || echo "! Не удалось создать запись efibootmgr"
+
+# Limine-бинарь для BIOS — пока оставляем в /boot
+
+# --- Конец блока Limine ---
+
+
 
 # --- Драйверы для виртуалки ---
 pacman -S --noconfirm linux-headers linux-virtio
