@@ -51,26 +51,26 @@ useradd -m -G wheel $USERNAME
 echo $USERNAME:$PASSWORD | chpasswd
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 
-# --- Limine загрузчик ---
-pacman -S --noconfirm git base-devel
-cd /tmp
-git clone https://github.com/limine-bootloader/limine.git
-cd limine
-make
-make install
-limine-install $DISK
+# Установка limine
+pacman -S --noconfirm limine
 
-# Создание /boot/limine.cfg
-cat > /boot/limine.cfg <<LIMINECFG
+# Копируем EFI-файлы в ESP
+mkdir -p /boot/EFI/BOOT
+cp /usr/lib/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI
+cp /usr/lib/limine/limine.sys /boot/
+
+# Создаём конфиг limine
+cat > /boot/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
 
 :Arch Linux
+    COMMENT=Default Arch install
     PROTOCOL=linux
     KERNEL_PATH=/vmlinuz-linux
-    CMDLINE=root=${DISK}2 rw
     INITRD_PATH=/initramfs-linux.img
-LIMINECFG
+    CMDLINE=root=PARTUUID=$(blkid -s PARTUUID -o value ${DISK}2) rw
+EOF
 
 # --- Драйверы для виртуалки ---
 pacman -S --noconfirm linux-headers linux-virtio
