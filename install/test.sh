@@ -12,15 +12,12 @@ sgdisk --zap-all $DISK
 dd if=/dev/zero of=$DISK bs=512 count=2048
 sgdisk -o $DISK
 
-sgdisk -n 1:0:+512M -t 1:ef00 -c 1:"EFI System Partition" $DISK
-sgdisk -n 2:0:0     -t 2:8300 -c 2:"Linux Root Partition" $DISK
+# Создание одного корневого раздела
+sgdisk -n 1:0:0 -t 1:8300 -c 1:"Linux Root Partition" $DISK
 
-mkfs.fat -F32 "${DISK}1"
-mkfs.ext4 "${DISK}2"
+mkfs.ext4 "${DISK}1"
 
-mount "${DISK}2" /mnt
-mkdir -p /mnt/boot
-mount "${DISK}1" /mnt/boot
+mount "${DISK}1" /mnt
 
 # --- Установка базовой системы ---
 pacstrap /mnt base base-devel linux linux-firmware vim networkmanager sudo git
@@ -62,14 +59,11 @@ git clone https://github.com/limine-bootloader/limine.git
 cd limine
 make
 
-# Установка загрузочных бинарников
-mkdir -p /boot/EFI/BOOT
-cp limine.sys /boot/
-cp limine-bios.sys /boot/            # для BIOS (опционально)
-cp BOOTX64.EFI /boot/EFI/BOOT/
+# Установка загрузочных бинарников для BIOS
+cp limine-bios.sys /boot/limine.sys
+cp limine-bios-cd.bin /boot/limine-cd.bin
 
 # Генерация limine.cfg
-PARTUUID=$(blkid -s PARTUUID -o value "$(findmnt / -o SOURCE -n)")
 cat > /boot/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
@@ -77,21 +71,15 @@ DEFAULT_ENTRY=Arch Linux
 :Arch Linux
     PROTOCOL=linux
     KERNEL_PATH=/vmlinuz-linux
-    INITRD_PATH=/initramfs-linux.img
-    CMDLINE=root=PARTUUID=${PARTUUID} rw quiet
+    CMDLINE=root=/dev/sda1 rw quiet
 EOF
 
-# Создание UEFI-записи вручную
-efibootmgr --create --disk "$DISK" --part 1 --label "Arch Linux (Limine)" \
-  --loader '\EFI\BOOT\BOOTX64.EFI' || echo "! Не удалось создать запись efibootmgr"
+# Установка Limine
+limine bios-install /dev/sda
 
 # Очистка
 cd /
 rm -rf /tmp/limine
-
-# --- Конец блока Limine ---
-
-
 
 # --- Драйверы для виртуалки ---
 pacman -S --noconfirm linux-headers linux-virtio
