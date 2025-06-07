@@ -86,14 +86,6 @@ echo "Limine успешно установлен и настроен."
 pacman -Sy --noconfirm ly
 systemctl enable ly
 
-# --- Yay (AUR helper) ---
-sudo -u $USERNAME bash -c '
-cd /home/$USERNAME
-git clone https://aur.archlinux.org/yay.git
-cd yay
-makepkg -si --noconfirm
-'
-chown -R $USERNAME:$USERNAME /home/$USERNAME
 
 EOF_CHROOT
 
