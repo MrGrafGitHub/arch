@@ -8,15 +8,17 @@ PASSWORD="1234"
 DISK="/dev/sda"
 
 # --- Разметка диска ---
-# Очистка старой таблицы разделов (MBR/GPT) и создание новой GPT
-sgdisk --zap-all $DISK    # полная очистка
-sgdisk -o $DISK          # создание новой пустой GPT
+# Полное стирание таблицы разделов, чтобы убрать MBR и GPT
+sgdisk --zap-all $DISK
 
-# Далее создание разделов
+# Дополнительно можно обнулить первые блоки диска, чтобы не осталось остатков
+dd if=/dev/zero of=$DISK bs=512 count=2048
+
+# Создаем новую GPT
+sgdisk -o $DISK
+
+# Создаем разделы заново
 sgdisk -n 1:0:+512M -t 1:ef00 -c 1:"EFI System Partition" $DISK
-sgdisk -n 2:0:0 -t 2:8300 -c 2:"Linux Root Partition" $DISK
-
-# Создаём основной Linux раздел на всё остальное место
 sgdisk -n 2:0:0 -t 2:8300 -c 2:"Linux Root Partition" $DISK
 
 # Форматируем разделы
