@@ -51,19 +51,17 @@ echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 # Обновление базы пакетов
 pacman -Sy --noconfirm
 
-# Установка пакетов
-pacman -S --noconfirm limine efibootmgr
+# Установка пакета limine
+pacman -S --noconfirm limine
 
-# Копирование файлов Limine
-mkdir -p /boot/EFI/limine
-cp /usr/share/limine/BOOTX64.EFI /boot/EFI/limine/
+# Установка Limine в MBR диска
+limine bios-install /dev/sda
 
-# Создание записи в NVRAM
-efibootmgr --create --disk /dev/sda --part Y --label "Arch Linux Limine Bootloader" --loader '\EFI\limine\BOOTX64.EFI' --unicode --verbose
+# Получаем PARTUUID корневого раздела
+PARTUUID=$(blkid -s PARTUUID -o value /dev/sda1)
 
-# Генерация конфигурации Limine
-PARTUUID=$(blkid -s PARTUUID -o value /dev/sda)
-cat > /boot/EFI/limine/limine.cfg <<EOF
+# Конфиг для Limine в /boot/limine.cfg
+cat > /boot/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
 
@@ -73,9 +71,6 @@ DEFAULT_ENTRY=Arch Linux
  INITRD_PATH=/initramfs-linux.img
  CMDLINE=root=PARTUUID=${PARTUUID} rw quiet
 EOF
-
-# Установка загрузчика в MBR (для BIOS-систем)
-limine bios-install /dev/sda
 
 echo "Limine успешно установлен и настроен."
 
