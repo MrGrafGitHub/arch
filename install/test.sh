@@ -4,7 +4,7 @@ set -e
 # --- Настройки ---
 HOSTNAME="arch-vm"
 USERNAME="mrgraf"
-USERPASS="1234"
+USERPASS="0502"
 ROOTPASS="root"
 DISK="/dev/sda"
 
@@ -50,8 +50,7 @@ echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
 pacman -Syu --noconfirm
 
 # --- Limine ---
-echo "Установка Limine"
-limine bios-install $DISK
+
 
 # Копируем limine-bios.sys (ОБЯЗАТЕЛЬНО!)
 cp /usr/share/limine/limine-bios.sys /boot/
@@ -79,6 +78,12 @@ INITRD_PATH=/initramfs-linux.img
 CMDLINE=root=UUID=${UUID} rw quiet
 EOF
 
+
+
+echo "Установка Limine"
+limine bios-install $DISK
+
+
 echo "Limine успешно установлен и настроен."
 
 
@@ -86,6 +91,14 @@ echo "Limine успешно установлен и настроен."
 pacman -Sy --noconfirm ly
 systemctl enable ly
 
+# --- Yay (AUR helper) ---
+sudo -u $USERNAME bash -c '
+cd /home/$USERNAME
+git clone https://aur.archlinux.org/yay.git
+cd yay
+makepkg -si --noconfirm
+'
+chown -R $USERNAME:$USERNAME /home/$USERNAME
 
 EOF_CHROOT
 
