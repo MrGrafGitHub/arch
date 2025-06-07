@@ -27,20 +27,6 @@ pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano net
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
-# Создаём конфиг Limine
-UUID=$(blkid -s UUID -o value ${DISK}2)
-
-cat > /mnt/limine.cfg <<EOF
-TIMEOUT=5
-DEFAULT_ENTRY=Arch Linux
-
-:Arch Linux
-PROTOCOL=linux
-KERNEL_PATH=/vmlinuz-linux
-INITRD_PATH=/initramfs-linux.img
-CMDLINE=root=LABEL=root rw quiet
-EOF
-
 # --- Настройки внутри chroot ---
 arch-chroot /mnt /bin/bash <<EOF_CHROOT
 
@@ -74,8 +60,20 @@ echo "Установка Limine"
 
 mkinitcpio -P
 
+# Создаём конфиг Limine
+
+cat > /boot/limine.cfg <<EOF
+TIMEOUT=5
+DEFAULT_ENTRY=Arch Linux
+
+:Arch Linux
+PROTOCOL=linux
+KERNEL_PATH=/vmlinuz-linux
+INITRD_PATH=/initramfs-linux.img
+CMDLINE=root=LABEL=root rw quiet
+EOF
+
 # Копируем файл загрузчика
-cp /mnt/limine.cfg /boot/limine.cfg
 cp /usr/share/limine/limine-bios.sys /boot/
 
 if [[ ! -f /boot/limine.cfg ]]; then
