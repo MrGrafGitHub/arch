@@ -26,7 +26,7 @@ mount "${DISK}1" /mnt
 # --- Установка базовой системы ---
 echo "Установка базовой системы"
 pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano networkmanager sudo git \
-xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd xfce4-panel xf86-video-vmware ly dbus \
+xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd xfce4-panel xf86-video-vmware dbus \
 xfce4-pulseaudio-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-whiskermenu-plugin \
 xfce4-xkb-plugin xfconf thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman lxtask \
 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
@@ -71,9 +71,9 @@ pacman -Sy --noconfirm
 echo "Установка Limine в MBR диска"
 limine bios-install /dev/sda
 
-# Получаем PARTUUID корневого раздела
-echo "Получаем PARTUUID корневого раздела"
-PARTUUID=$(blkid -s PARTUUID -o value /dev/sda1)
+# Получаем UUID корневого раздела
+echo "Получаем UUID корневого раздела"
+UUID=$(blkid -s UUID -o value /dev/sda1)
 
 # Конфиг для Limine в /boot/limine.cfg
 echo "Конфиг для Limine в /boot/limine.cfg"
@@ -85,7 +85,7 @@ DEFAULT_ENTRY=Arch Linux
 PROTOCOL=linux
 KERNEL_PATH=/vmlinuz-linux
 INITRD_PATH=/initramfs-linux.img
-CMDLINE=root=PARTUUID=${PARTUUID} rw quiet
+CMDLINE=root=UUID=${UUID} rw quiet
 EOF
 
 echo "Limine успешно установлен и настроен."
@@ -93,6 +93,7 @@ echo "Limine успешно установлен и настроен."
 
 # Менеджер входа ly
 echo "Менеджер входа ly"
+pacman -Sy --noconfirm ly
 systemctl enable ly
 systemctl enable dbus
 
