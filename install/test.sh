@@ -51,40 +51,34 @@ echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 # Обновление базы пакетов
 pacman -Sy --noconfirm
 
-# Установка зависимостей и сборка Limine
-pacman -S --noconfirm git xz base-devel
+# Установка пакета Limine
+echo "# Установка пакета Limine"
+pacman -S --noconfirm limine
 
-cd /tmp
-git clone https://github.com/limine-bootloader/limine.git
-cd limine
-make
+# Создание директории для Limine
+echo "# Создание директории для Limine"
+mkdir -p /boot/limine
 
-# Установка загрузочных бинарников для BIOS
-cp limine.sys /boot/
-cp limine-bios.sys /boot/
-cp limine-bios-cd.bin /boot/           # для BIOS (опционально)
-cp BOOTX64.EFI /boot/EFI/BOOT/
+# Копирование загрузочных бинарников для BIOS
+echo "# Копирование загрузочных бинарников для BIOS"
+cp /usr/share/limine/limine-bios.sys /boot/limine/
 
+# Установка Limine на диск
+echo "# Установка Limine на диск"
+limine bios-install /dev/sda
 
-# Генерация limine.cfg
-cat > /boot/limine.cfg <<EOF
-TIMEOUT=5
-DEFAULT_ENTRY=Arch Linux
-
-# Генерация limine.cfg
-cat > /boot/limine.cfg <<EOF
+# Генерация конфигурации Limine
+echo "# Генерация конфигурации Limine"
+cat > /boot/limine/limine.conf <<EOL
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
 
 :Arch Linux
- PROTOCOL=linux
- KERNEL_PATH=/vmlinuz-linux
- INITRD_PATH=/initramfs-linux.img
- CMDLINE=root=/dev/sda1 rw quiet
-EOF
-
-# Установка Limine
-limine bios-install /dev/sda
+  PROTOCOL=linux
+  KERNEL_PATH=boot():/vmlinuz-linux
+  INITRD_PATH=boot():/initramfs-linux.img
+  CMDLINE=root=/dev/sda1 rw quiet
+EOL
 
 # Очистка
 cd /
