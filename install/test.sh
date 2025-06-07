@@ -4,7 +4,7 @@ set -e
 # --- Настройки ---
 HOSTNAME="arch-vm"
 USERNAME="mrgraf"
-USERPASS="0502"
+USERPASS="1234"
 ROOTPASS="root"
 DISK="/dev/sda"
 
