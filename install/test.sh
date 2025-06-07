@@ -19,6 +19,7 @@ mkfs.ext4 -L root "${DISK}2"
 # Монтируем основную систему
 mount "${DISK}2" /mnt
 mkdir -p /mnt/boot
+mkdir -p /mnt/boot/limine
 mount "${DISK}1" /mnt/boot
 
 # --- Установка базовой системы ---
@@ -74,7 +75,7 @@ CMDLINE=root=LABEL=root rw quiet
 EOF
 
 # Копируем файл загрузчика
-mkdir -p /mnt/boot/limine
+
 cp /usr/share/limine/limine-bios.sys /mnt/boot/limine/
 
 if [[ ! -f /boot/limine.cfg ]]; then
