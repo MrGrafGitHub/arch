@@ -8,12 +8,13 @@ PASSWORD="1234"
 DISK="/dev/sda"
 
 # --- Разметка диска ---
-# Полностью очищаем диск (желательно для чистой виртуалки)
-sgdisk --zap-all $DISK
-sgdisk -o $DISK
+# Очистка старой таблицы разделов (MBR/GPT) и создание новой GPT
+sgdisk --zap-all $DISK    # полная очистка
+sgdisk -o $DISK          # создание новой пустой GPT
 
-# Создаём EFI раздел 512 MiB с типом ef00
+# Далее создание разделов
 sgdisk -n 1:0:+512M -t 1:ef00 -c 1:"EFI System Partition" $DISK
+sgdisk -n 2:0:0 -t 2:8300 -c 2:"Linux Root Partition" $DISK
 
 # Создаём основной Linux раздел на всё остальное место
 sgdisk -n 2:0:0 -t 2:8300 -c 2:"Linux Root Partition" $DISK
