@@ -9,6 +9,7 @@ ROOTPASS="root"
 DISK="/dev/sda"
 
 # Разметка с ext4 /boot
+echo -e "\n\033[1;32mРазметка с ext4 /boot fat32\033[0m"
 parted -s "$DISK" mklabel gpt
 parted -s "$DISK" mkpart primary fat32 1MiB 300MiB   # /boot
 parted -s "$DISK" mkpart primary ext4 300MiB 100%   # /
@@ -17,13 +18,19 @@ mkfs.fat -F32 -n boot "${DISK}1"
 mkfs.ext4 -L root "${DISK}2"
 
 # Монтируем основную систему
+echo -e "\n\033[1;32mМонтируем основную систему\033[0m"
 mount "${DISK}2" /mnt
 mkdir -p /mnt/boot
 mount "${DISK}1" /mnt/boot
 
 # --- Установка базовой системы ---
-echo "Установка базовой системы"
-pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano networkmanager sudo git bash-completion
+echo -e "\n\033[1;32mУстановка базовой системы\033[0m"
+pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano networkmanager sudo git \
+xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd xfce4-panel xf86-video-vmware dbus \
+xfce4-pulseaudio-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-whiskermenu-plugin \
+xfce4-xkb-plugin xfconf thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman lxtask \
+pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
+pulseaudio-rtp pulseaudio-zeroconf xarchiver unrar unzip p7zip numlockx firefox rofi nitrogen i3-wm bash-completion
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -31,6 +38,7 @@ genfstab -U /mnt >> /mnt/etc/fstab
 arch-chroot /mnt /bin/bash <<EOF_CHROOT
 
 # --- Локализация ---
+echo -e "\n\033[1;32mЛокализация\033[0m"
 echo "$HOSTNAME" > /etc/hostname
 ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 hwclock --systohc
@@ -78,19 +86,10 @@ cp /usr/share/limine/limine-bios.sys /boot/limine/
 cp /usr/share/limine/limine-bios-cd.bin /boot/limine/
 cp /usr/share/limine/limine-uefi-cd.bin /boot/limine/
 
-# Проверим наличие
-if [[ ! -f /boot/limine/limine.conf ]]; then
-    echo "limine.conf не найден в /boot!"
-    exit 1
-fi
-
-if [[ ! -f /boot/limine/limine-bios.sys ]]; then
-    echo "limine-bios.sys не найден в /boot/limine!"
-    exit 1
-fi
-
 # Устанавливаем Limine
 limine bios-install $DISK
+
+echo -e "\n\033[1;32mLimine успешно установлен и настроен!\033[0m"
 
 # --- Менеджер входа ly ---
 pacman -Sy --noconfirm ly
