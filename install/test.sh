@@ -40,27 +40,34 @@ echo "KEYMAP=ru" > /etc/vconsole.conf
 echo "FONT=cyr-sun16" >> /etc/vconsole.conf
 
 # Сеть
+echo "Сеть"
 systemctl enable NetworkManager
 
 # Пользователи
+echo "Пользователи"
 echo root:$PASSWORD | chpasswd
 useradd -m -G wheel $USERNAME
 echo $USERNAME:$PASSWORD | chpasswd
 echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
 
 # Обновление базы пакетов
+echo "Обновление базы пакетов"
 pacman -Sy --noconfirm
 
 # Установка пакета limine
+echo "Установка пакета limine"
 pacman -S --noconfirm limine
 
 # Установка Limine в MBR диска
+echo "Установка Limine в MBR диска"
 limine bios-install /dev/sda
 
 # Получаем PARTUUID корневого раздела
+echo "Получаем PARTUUID корневого раздела"
 PARTUUID=$(blkid -s PARTUUID -o value /dev/sda1)
 
 # Конфиг для Limine в /boot/limine.cfg
+echo "Конфиг для Limine в /boot/limine.cfg"
 cat > /boot/limine.cfg <<EOF
 TIMEOUT=5
 DEFAULT_ENTRY=Arch Linux
@@ -75,21 +82,25 @@ EOF
 echo "Limine успешно установлен и настроен."
 
 # --- Драйверы для виртуалки ---
-pacman -S --noconfirm linux-headers linux-virtio
+echo "Драйверы для виртуалки"
+pacman -Sy --noconfirm linux-headers linux-virtio
 
 # --- Графика и окружение ---
-pacman -S --noconfirm xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd xfce4-panel \
+echo "Графика и окружение"
+pacman -Sy --noconfirm xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd xfce4-panel \
 xfce4-pulseaudio-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-whiskermenu-plugin \
 xfce4-xkb-plugin xfconf thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman lxtask \
 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
 pulseaudio-rtp pulseaudio-zeroconf xarchiver unrar unzip p7zip numlockx firefox rofi nitrogen i3-wm
 
 # Менеджер входа ly
-pacman -S --noconfirm ly dbus
+echo "Менеджер входа ly"
+pacman -Sy --noconfirm ly dbus
 systemctl enable ly
 systemctl enable dbus
 
 # --- Yay (AUR helper) ---
+echo "Yay (AUR helper)"
 sudo -u $USERNAME bash -c "
 cd /home/$USERNAME
 git clone https://aur.archlinux.org/yay.git
@@ -98,11 +109,13 @@ makepkg -si --noconfirm
 "
 
 # --- Автозапуск XFCE ---
+echo "Автозапуск XFCE"
 echo "exec startxfce4" > /home/$USERNAME/.xinitrc
 chown $USERNAME:$USERNAME /home/$USERNAME/.xinitrc
 
 EOF
 
 # --- Финал ---
+echo "Финал"
 umount -R /mnt
 echo "Установка завершена. Можно перезагружаться!"
