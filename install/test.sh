@@ -34,7 +34,7 @@ thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman ntfs-3g \
 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
 xarchiver unrar unzip p7zip \
 numlockx kitty firefox rofi nitrogen bash-completion lxtask flameshot keepassxc mpv \
-pulseaudio-rtp pulseaudio-zeroconf i3-wm picom 
+pulseaudio-rtp pulseaudio-zeroconf i3 picom 
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
