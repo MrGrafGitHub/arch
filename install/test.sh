@@ -33,7 +33,7 @@ xfce4-xkb-plugin xfconf network-manager-applet ttf-font-awesome \
 thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman ntfs-3g \
 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
 xarchiver unrar unzip p7zip \
-numlockx kitty firefox rofi nitrogen bash-completion lxtask flameshot keepassxc mpv neofetch \
+numlockx kitty firefox rofi nitrogen bash-completion lxtask flameshot keepassxc mpv \
 pulseaudio-rtp pulseaudio-zeroconf i3-wm picom 
 
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -255,7 +255,7 @@ fi
 
 # Установка нужных AUR пакетов
 echo -e "\n\033[1;32m [*] Установка AUR пакетов... \033[0m"
-yay -S --noconfirm --needed audacious-gtk3 audacious-plugins-gtk3 autotiling
+yay -S --noconfirm --needed audacious-gtk3 audacious-plugins-gtk3 autotiling neofetch 
 EOC
 
 # Удаление временного правила sudo
