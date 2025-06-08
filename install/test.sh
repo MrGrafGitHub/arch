@@ -106,41 +106,33 @@ pacman -Sy --noconfirm ly
 systemctl enable ly
 
 
-# Configs
-RAW_I3_CFG="https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/i3/test/config"
-RAW_PICOM_CFG="https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/i3/test/picom"
-RAW_NEOFETCH_CFG="https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/neofetch/config.conf"
-RAW_XFCE_CFG="https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
-RAW_PULSE_DEFAULT="https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/pulse/default.pa"
-RAW_PULSE_SYSTEM="https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/pulse/system.pa"
+# Функция загрузки файла под пользователем, с проверкой
+download_user_file() {
+  local url="$1"
+  local dest="$2"
+  echo -e "\033[1;32m Загрузка $dest \033[0m"
+  sudo -u "$USERNAME" curl -fLo "$dest" "$url" || {
+    echo -e "\033[1;31m Ошибка загрузки $url \033[0m"
+    exit 1
+  }
+}
 
-# Themes
-RAW_THEME="https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Dracula-alt-style.tar.xz"
-RAW_THEME_ICON="https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Mkos-Big-Sur.tar.xz"
-RAW_THEME_CURSOR="https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/oreo-teal-cursors.tar.gz"
+# Создаём каталоги для конфигов под пользователем
+mkdir -p "$HOME_DIR/.config/i3"
+mkdir -p "$HOME_DIR/.config/neofetch"
+mkdir -p "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml"
+mkdir -p "$HOME_DIR/.config/nitrogen"
+mkdir -p "$HOME_DIR/Wallpapers"
+mkdir -p "$HOME_DIR/.config/autostart"
 
-# Wallpaper
-WALL_DIR="$HOME_DIR/Wallpapers"
-WALL_URL="https://raw.githubusercontent.com/MrGrafGitHub/arch/assets/wallpaper.jpg"
-WALL_FILE="$WALL_DIR/wallpaper.jpg"
+# Загружаем конфиги под пользователем
+download_user_file "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/i3/test/config" "$HOME_DIR/.config/i3/config"
+download_user_file "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/i3/test/picom" "$HOME_DIR/.config/i3/picom.conf"
+download_user_file "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/neofetch/config.conf" "$HOME_DIR/.config/neofetch/config.conf"
+download_user_file "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
+download_user_file "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/assets/wallpaper.jpg" "$HOME_DIR/Wallpapers/wallpaper.jpg"
 
-USERNAME="mrgraf"
-
-HOME_DIR="/home/$USERNAME"
-AUTOSTART_DIR="$HOME_DIR/.config/autostart"
-DESKTOP_FILE="$AUTOSTART_DIR/i3.desktop"
-
-
-# Включаем multilib и цвет, не затрагивая остальное
-echo -e "\n\033[1;32m Включаем multilib \033[0m"
-sed -i '/^\[multilib\]/,/^Include/ s/^#//' /etc/pacman.conf
-sed -i 's/^#Color/Color/' /etc/pacman.conf
-
-#Добавление строки в /etc/environment
-echo -e "\n\033[1;32m Добавление строки в /etc/environment \033[0m"
-grep -qxF 'QT_QPA_PLATFORMTHEME=qt5ct' /etc/environment || echo 'QT_QPA_PLATFORMTHEME=qt5ct' >> /etc/environment
-
-#Добавление load-module module-device-manager в /etc/pulse/default.pa и system.pa
+# Для PulseAudio файлы в /etc/pulse — нужна root-права
 echo -e "\n\033[1;32m Добавление load-module module-device-manager в pulse \033[0m"
 for FILE in /etc/pulse/default.pa /etc/pulse/system.pa; do
     if ! grep -q '^load-module module-device-manager' "$FILE"; then
@@ -148,64 +140,38 @@ for FILE in /etc/pulse/default.pa /etc/pulse/system.pa; do
     fi
 done
 
+# Распаковка тем — нужно от root, в нужные каталоги
+echo -e "\033[1;32m Загрузка тем в /tmp \033[0m"
+curl -fLo /tmp/theme.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Dracula-alt-style.tar.xz"
+curl -fLo /tmp/icons.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Mkos-Big-Sur.tar.xz"
+curl -fLo /tmp/cursors.tar.gz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/oreo-teal-cursors.tar.gz"
 
-
-# Directories
-echo -e "\n\033[1;32m Создание директорий для конфигов и тем \033[0m"
-mkdir -p "$HOME_DIR/.config/i3"
-mkdir -p "$HOME_DIR/.config/neofetch"
-mkdir -p "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml"
-mkdir -p /usr/share/icons/custom-cursors
+echo -e "\033[1;32m Распаковка тем \033[0m"
 mkdir -p /usr/share/themes/custom-themes
+mkdir -p /usr/share/icons/custom-cursors
+mkdir -p /usr/share/icons
 
-# Config downloads
-echo -e "\n\033[1;32m Загрузка конфигов \033[0m"
-curl -Lo "$HOME_DIR/.config/i3/config" "$RAW_I3_CFG"
-curl -Lo "$HOME_DIR/.config/i3/picom.conf" "$RAW_PICOM_CFG"
-curl -Lo "$HOME_DIR/.config/neofetch/config.conf" "$RAW_NEOFETCH_CFG"
-curl -Lo "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "$RAW_XFCE_CFG"
-curl -Lo /etc/pulse/default.pa "$RAW_PULSE_DEFAULT"
-curl -Lo /etc/pulse/system.pa "$RAW_PULSE_SYSTEM"
-
-# Theme downloads and extraction
-echo -e "\n\033[1;32m Загрузка и распаковка тем \033[0m"
-curl -Lo /tmp/theme.tar.xz "$RAW_THEME"
-curl -Lo /tmp/icons.tar.xz "$RAW_THEME_ICON"
-curl -Lo /tmp/cursors.tar.gz "$RAW_THEME_CURSOR"
-
-echo -e "\n\033[1;32m Установка тем \033[0m"
 tar -xf /tmp/theme.tar.xz -C /usr/share/themes/custom-themes
 tar -xf /tmp/icons.tar.xz -C /usr/share/icons/
 tar -xzf /tmp/cursors.tar.gz -C /usr/share/icons/custom-cursors
 
-# Set ownership back to user
+# Проверяем права на домашние конфиги
+echo -e "\033[1;32m Исправляем права на домашние конфиги \033[0m"
 chown -R "$USERNAME:$USERNAME" "$HOME_DIR/.config"
+chown -R "$USERNAME:$USERNAME" "$HOME_DIR/Wallpapers"
 
-# Создать папку и скачать обойну
-mkdir -p "$WALL_DIR"
-curl -Lo "$WALL_FILE" "$WALL_URL"
-
-# Настроить nitrogen
-mkdir -p "$HOME_DIR/.config/nitrogen"
-
+# Настройка nitrogen (под пользователем)
 cat > "$HOME_DIR/.config/nitrogen/bg-saved.cfg" <<EOF
 [xin_-1]
-file=$WALL_FILE
+file=$HOME_DIR/Wallpapers/wallpaper.jpg
 mode=4
 bgcolor=#000000
 EOF
 
-# Права
-chown -R "$USERNAME:$USERNAME" "$HOME_DIR/.config/nitrogen"
+chown "$USERNAME:$USERNAME" "$HOME_DIR/.config/nitrogen/bg-saved.cfg"
 
-
-echo -e "\n\033[1;32m Настройка автозапуска i3 под XFCE \033[0m"
-
-# Создание каталога автозапуска
-mkdir -p "$AUTOSTART_DIR"
-
-# Создание .desktop файла
-cat > "$DESKTOP_FILE" <<EOF
+echo -e "\033[1;32m Загрузка и установка автозапуска i3 \033[0m"
+cat > "$HOME_DIR/.config/autostart/i3.desktop" <<EOF
 [Desktop Entry]
 Encoding=UTF-8
 Version=0.9.4
@@ -219,10 +185,7 @@ StartupNotify=false
 Terminal=false
 Hidden=false
 EOF
-
-# Установка владельца и прав
-chown "$USERNAME:$USERNAME" "$DESKTOP_FILE"
-chmod 644 "$DESKTOP_FILE"
+chown "$USERNAME:$USERNAME" "$HOME_DIR/.config/autostart/i3.desktop"
 
 echo -e "\033[1;34m Настройка завершена \033[0m"
 
