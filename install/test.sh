@@ -124,6 +124,12 @@ WALL_DIR="$HOME_DIR/Wallpapers"
 WALL_URL="https://raw.githubusercontent.com/MrGrafGitHub/arch/assets/wallpaper.jpg"
 WALL_FILE="$WALL_DIR/wallpaper.jpg"
 
+USERNAME="mrgraf"
+
+HOME_DIR="/home/$USERNAME"
+AUTOSTART_DIR="$HOME_DIR/.config/autostart"
+DESKTOP_FILE="$AUTOSTART_DIR/i3.desktop"
+
 
 # Включаем multilib и цвет, не затрагивая остальное
 echo -e "\n\033[1;32m Включаем multilib \033[0m"
@@ -142,8 +148,7 @@ for FILE in /etc/pulse/default.pa /etc/pulse/system.pa; do
     fi
 done
 
-USERNAME="mrgraf"
-HOME_DIR="/home/$USERNAME"
+
 
 # Directories
 echo -e "\n\033[1;32m Создание директорий для конфигов и тем \033[0m"
@@ -192,6 +197,34 @@ EOF
 
 # Права
 chown -R "$USERNAME:$USERNAME" "$HOME_DIR/.config/nitrogen"
+
+
+echo -e "\n\033[1;32m Настройка автозапуска i3 под XFCE \033[0m"
+
+# Создание каталога автозапуска
+mkdir -p "$AUTOSTART_DIR"
+
+# Создание .desktop файла
+cat > "$DESKTOP_FILE" <<EOF
+[Desktop Entry]
+Encoding=UTF-8
+Version=0.9.4
+Type=Application
+Name=i3
+Comment=i3
+Exec=i3
+OnlyShowIn=XFCE;
+RunHook=0
+StartupNotify=false
+Terminal=false
+Hidden=false
+EOF
+
+# Установка владельца и прав
+chown "$USERNAME:$USERNAME" "$DESKTOP_FILE"
+chmod 644 "$DESKTOP_FILE"
+
+echo -e "\033[1;34m Настройка завершена \033[0m"
 
 
 # --- Установка yay и AUR пакетов от пользователя $USERNAME ---
