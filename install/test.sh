@@ -121,20 +121,24 @@ mkdir -p "$HOME_DIR/.config/autostart"
 # Загружаем конфиги под пользователем
 
 echo -e "\033[1;32m Загрузка $HOME_DIR/.config/i3/config \033[0m"
-sudo -u "$USERNAME" wget -q -O "$HOME_DIR/.config/i3/config" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/i3/test/config" || { echo -e "\033[1;31m Ошибка загрузки i3 config \033[0m"; exit 1; }
+wget -q -O "$HOME_DIR/.config/i3/config" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/i3/test/config" || { echo "Ошибка загрузки i3 config"; exit 1; }
+chown $USERNAME:$USERNAME "$HOME_DIR/.config/i3/config"
 
 echo -e "\033[1;32m Загрузка $HOME_DIR/.config/i3/picom.conf \033[0m"
-sudo -u "$USERNAME" wget -q -O "$HOME_DIR/.config/i3/picom.conf" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/i3/test/picom" || { echo -e "\033[1;31m Ошибка загрузки picom.conf \033[0m"; exit 1; }
+wget -q -O "$HOME_DIR/.config/i3/picom.conf" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/i3/test/picom" || { echo "Ошибка загрузки picom.conf"; exit 1; }
+chown $USERNAME:$USERNAME "$HOME_DIR/.config/i3/picom.conf"
 
 echo -e "\033[1;32m Загрузка $HOME_DIR/.config/neofetch/config.conf \033[0m"
-sudo -u "$USERNAME" wget -q -O "$HOME_DIR/.config/neofetch/config.conf" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/neofetch/config.conf" || { echo -e "\033[1;31m Ошибка загрузки neofetch config.conf \033[0m"; exit 1; }
+wget -q -O "$HOME_DIR/.config/neofetch/config.conf" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/neofetch/config.conf" || { echo "Ошибка загрузки neofetch config.conf"; exit 1; }
+chown $USERNAME:$USERNAME "$HOME_DIR/.config/neofetch/config.conf"
 
 echo -e "\033[1;32m Загрузка $HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml \033[0m"
-sudo -u "$USERNAME" wget -q -O "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" || { echo -e "\033[1;31m Ошибка загрузки xfce4-panel.xml \033[0m"; exit 1; }
+wget -q -O "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" || { echo "Ошибка загрузки xfce4-panel.xml"; exit 1; }
+chown $USERNAME:$USERNAME "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
 
 echo -e "\033[1;32m Загрузка $HOME_DIR/Wallpapers/wallpaper.jpg \033[0m"
-sudo -u "$USERNAME" wget -q -O "$HOME_DIR/Wallpapers/wallpaper.jpg" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/assets/wallpaper.jpg" || { echo -e "\033[1;31m Ошибка загрузки wallpaper.jpg \033[0m"; exit 1; }
-
+wget -q -O "$HOME_DIR/Wallpapers/wallpaper.jpg" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/assets/wallpaper.jpg" || { echo "Ошибка загрузки wallpaper.jpg"; exit 1; }
+chown $USERNAME:$USERNAME "$HOME_DIR/Wallpapers/wallpaper.jpg"
 
 # Для PulseAudio файлы в /etc/pulse — нужна root-права
 echo -e "\n\033[1;32m Добавление load-module module-device-manager в pulse \033[0m"
