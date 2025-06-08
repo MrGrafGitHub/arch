@@ -41,6 +41,11 @@ genfstab -U /mnt >> /mnt/etc/fstab
 # --- Настройки внутри chroot ---
 arch-chroot /mnt /bin/bash <<EOF_CHROOT
 
+USERNAME="mrgraf"
+USERPASS="1234"
+HOME_DIR="/home/$USERNAME"
+ROOTPASS="root"
+
 # --- Локализация ---
 echo -e "\n\033[1;32mЛокализация\033[0m"
 echo "$HOSTNAME" > /etc/hostname
