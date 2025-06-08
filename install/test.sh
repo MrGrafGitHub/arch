@@ -110,25 +110,30 @@ echo -e "\n\033[1;32m Менеджер входа ly \033[0m"
 pacman -Sy --noconfirm ly
 systemctl enable ly
 
+# Создаём каталоги для конфигов под пользователем
+mkdir -p "$HOME_DIR/.config/i3" \
+         "$HOME_DIR/.config/neofetch" \
+         "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml" \
+         "$HOME_DIR/.config/nitrogen" \
+         "$HOME_DIR/Wallpapers" \
+         "$HOME_DIR/.config/autostart"
 
 # Функция загрузки файла под пользователем, с проверкой
 download_user_file() {
   local url="$1"
   local dest="$2"
+  local dir
+  dir=$(dirname "$dest")
+  mkdir -p "$dir" || {
+    echo -e "\033[1;31m Не удалось создать директорию $dir \033[0m"
+    exit 1
+  }
   echo -e "\033[1;32m Загрузка $dest \033[0m"
   sudo -u "$USERNAME" wget -q -O "$dest" "$url" || {
     echo -e "\033[1;31m Ошибка загрузки $url \033[0m"
     exit 1
   }
 }
-
-# Создаём каталоги для конфигов под пользователем
-mkdir -p "$HOME_DIR/.config/i3"
-mkdir -p "$HOME_DIR/.config/neofetch"
-mkdir -p "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml"
-mkdir -p "$HOME_DIR/.config/nitrogen"
-mkdir -p "$HOME_DIR/Wallpapers"
-mkdir -p "$HOME_DIR/.config/autostart"
 
 # Загружаем конфиги под пользователем
 download_user_file "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/i3/test/config" "$HOME_DIR/.config/i3/config"
@@ -160,6 +165,8 @@ tar -xf /tmp/theme.tar.xz -C /usr/share/themes/custom-themes
 tar -xf /tmp/icons.tar.xz -C /usr/share/icons/
 tar -xzf /tmp/cursors.tar.gz -C /usr/share/icons/custom-cursors
 
+rm -f /tmp/theme.tar.xz /tmp/icons.tar.xz /tmp/cursors.tar.gz
+
 # Проверяем права на домашние конфиги
 echo -e "\033[1;32m Исправляем права на домашние конфиги \033[0m"
 chown -R "$USERNAME:$USERNAME" "$HOME_DIR/.config"
@@ -168,7 +175,7 @@ chown -R "$USERNAME:$USERNAME" "$HOME_DIR/Wallpapers"
 # Настройка nitrogen (под пользователем)
 cat > "$HOME_DIR/.config/nitrogen/bg-saved.cfg" <<EOF
 [xin_-1]
-file=$HOME_DIR/Wallpapers/wallpaper.jpg
+file=${HOME_DIR}/Wallpapers/wallpaper.jpg
 mode=4
 bgcolor=#000000
 EOF
