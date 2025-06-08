@@ -111,7 +111,7 @@ download_user_file() {
   local url="$1"
   local dest="$2"
   echo -e "\033[1;32m Загрузка $dest \033[0m"
-  sudo -u "$USERNAME" curl -fLo "$dest" "$url" || {
+  sudo -u "$USERNAME" curl -fo "$dest" "$url" || {
     echo -e "\033[1;31m Ошибка загрузки $url \033[0m"
     exit 1
   }
@@ -142,9 +142,9 @@ done
 
 # Распаковка тем — нужно от root, в нужные каталоги
 echo -e "\033[1;32m Загрузка тем в /tmp \033[0m"
-curl -fLo /tmp/theme.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Dracula-alt-style.tar.xz"
-curl -fLo /tmp/icons.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Mkos-Big-Sur.tar.xz"
-curl -fLo /tmp/cursors.tar.gz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/oreo-teal-cursors.tar.gz"
+curl -fo /tmp/theme.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Dracula-alt-style.tar.xz"
+curl -fo /tmp/icons.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Mkos-Big-Sur.tar.xz"
+curl -fo /tmp/cursors.tar.gz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/oreo-teal-cursors.tar.gz"
 
 echo -e "\033[1;32m Распаковка тем \033[0m"
 mkdir -p /usr/share/themes/custom-themes
