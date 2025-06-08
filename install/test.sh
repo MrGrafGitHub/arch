@@ -27,7 +27,7 @@ mount "${DISK}1" /mnt/boot
 # --- Установка базовой системы ---
 echo -e "\n\033[1;32m Установка базовой системы \033[0m"
 pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano networkmanager sudo git xf86-video-vmware \
-xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd xfce4-panel  dbus \
+xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd xfce4-panel  dbus wget \
 xfce4-pulseaudio-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-whiskermenu-plugin \
 xfce4-xkb-plugin xfconf network-manager-applet ttf-font-awesome \
 thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman ntfs-3g \
@@ -111,7 +111,7 @@ download_user_file() {
   local url="$1"
   local dest="$2"
   echo -e "\033[1;32m Загрузка $dest \033[0m"
-  sudo -u "$USERNAME" curl -fo "$dest" "$url" || {
+  sudo -u "$USERNAME" wget -qO "$dest" "$url" || {
     echo -e "\033[1;31m Ошибка загрузки $url \033[0m"
     exit 1
   }
@@ -142,9 +142,9 @@ done
 
 # Распаковка тем — нужно от root, в нужные каталоги
 echo -e "\033[1;32m Загрузка тем в /tmp \033[0m"
-curl -fo /tmp/theme.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Dracula-alt-style.tar.xz"
-curl -fo /tmp/icons.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Mkos-Big-Sur.tar.xz"
-curl -fo /tmp/cursors.tar.gz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/oreo-teal-cursors.tar.gz"
+wget -qO /tmp/theme.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Dracula-alt-style.tar.xz"
+wget -qO /tmp/icons.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Mkos-Big-Sur.tar.xz"
+wget -qO /tmp/cursors.tar.gz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/oreo-teal-cursors.tar.gz"
 
 echo -e "\033[1;32m Распаковка тем \033[0m"
 mkdir -p /usr/share/themes/custom-themes
