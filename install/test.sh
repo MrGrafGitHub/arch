@@ -237,7 +237,7 @@ chmod 0440 /etc/sudoers.d/aur-temp
 
 # Запуск от пользователя
 echo -e "\n\033[1;32m Запуск от пользователя \033[0m"
-sudo -u "$USERNAME" bash <<'EOC'
+sudo -u "$USERNAME" bash <<EOC
 set -e  # Завершить выполнение при ошибке
 
 cd "$HOME"
