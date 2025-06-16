@@ -126,6 +126,7 @@ rm -rf /tmp/i3-tmp && mkdir -p /tmp/i3-tmp
 unzip -oq /tmp/i3.zip -d /tmp/i3-tmp || { echo "Ошибка распаковки i3.zip"; exit 1; }
 cp -rf /tmp/i3-tmp/* "$HOME_DIR/.config/i3/"
 chown -R $USERNAME:$USERNAME "$HOME_DIR/.config/i3"
+find "$HOME_DIR/.config/i3" -type f -name "*.sh" -exec chmod +x {} \;
 
 # polybar
 echo -e "\033[1;32m Загрузка конфигов polybar \033[0m"
@@ -134,7 +135,7 @@ rm -rf /tmp/polybar-tmp && mkdir -p /tmp/polybar-tmp
 unzip -oq /tmp/polybar.zip -d /tmp/polybar-tmp || { echo "Ошибка распаковки polybar.zip"; exit 1; }
 cp -rf /tmp/polybar-tmp/* "$HOME_DIR/.config/polybar/"
 chown -R $USERNAME:$USERNAME "$HOME_DIR/.config/polybar"
-
+find "$HOME_DIR/.config/polybar" -type f -name "*.sh" -exec chmod +x {} \;
 
 echo -e "\033[1;32m Загрузка $HOME_DIR/.config/neofetch/config.conf \033[0m"
 wget -q -O "$HOME_DIR/.config/neofetch/config.conf" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/neofetch/config.conf" || { echo "Ошибка загрузки neofetch config.conf"; exit 1; }
