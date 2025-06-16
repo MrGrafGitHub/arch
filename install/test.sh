@@ -33,8 +33,8 @@ network-manager-applet ttf-font-awesome \
 thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman ntfs-3g \
 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
 xarchiver unrar unzip p7zip zip \
-numlockx kitty firefox rofi nitrogen bash-completion lxtask flameshot keepassxc mpv \
-pulseaudio-rtp pulseaudio-zeroconf i3 picom polybar lxappearance kvantum-qt5 
+numlockx kitty firefox rofi nitrogen bash-completion lxtask flameshot keepassxc mpv telegram-desktop \
+pulseaudio-rtp pulseaudio-zeroconf i3 picom polybar kvantum-qt5 python-gobject python-gitdb pavucontrol arandr 
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -119,16 +119,40 @@ mkdir -p "$HOME_DIR/Wallpapers"
 
 # Загружаем конфиги под пользователем
 
+# i3
 echo -e "\033[1;32m Загрузка конфигов i3 \033[0m"
 wget -q -O "/tmp/i3.zip" "https://github.com/MrGrafGitHub/arch/raw/main/configs/i3.zip" || { echo "Ошибка загрузки i3.zip"; exit 1; }
-unzip -oq "/tmp/i3.zip" -d "$HOME_DIR/.config/i3/" || { echo "Ошибка распаковки i3.zip"; exit 1; }
+rm -rf /tmp/i3-tmp && mkdir -p /tmp/i3-tmp
+unzip -oq /tmp/i3.zip -d /tmp/i3-tmp || { echo "Ошибка распаковки i3.zip"; exit 1; }
+cp -rf /tmp/i3-tmp/i3/* "$HOME_DIR/.config/i3/"
 chown -R $USERNAME:$USERNAME "$HOME_DIR/.config/i3"
+find "$HOME_DIR/.config/i3" -type f -name "*.sh" -exec chmod +x {} \;
 
+# polybar
 echo -e "\033[1;32m Загрузка конфигов polybar \033[0m"
 wget -q -O "/tmp/polybar.zip" "https://github.com/MrGrafGitHub/arch/raw/main/configs/polybar.zip" || { echo "Ошибка загрузки polybar.zip"; exit 1; }
-unzip -oq "/tmp/polybar.zip" -d "$HOME_DIR/.config/polybar/" || { echo "Ошибка распаковки polybar.zip"; exit 1; }
+rm -rf /tmp/polybar-tmp && mkdir -p /tmp/polybar-tmp
+unzip -oq /tmp/polybar.zip -d /tmp/polybar-tmp || { echo "Ошибка распаковки polybar.zip"; exit 1; }
+cp -rf /tmp/polybar-tmp/polybar/* "$HOME_DIR/.config/polybar/"
 chown -R $USERNAME:$USERNAME "$HOME_DIR/.config/polybar"
+find "$HOME_DIR/.config/polybar" -type f -name "*.sh" -exec chmod +x {} \;
 
+echo -e "\033[1;32m Загрузка и установка системных шрифтов \033[0m"
+wget -q -O /tmp/fonts.zip "https://github.com/MrGrafGitHub/arch/raw/main/font/fonts.zip" || { echo "Ошибка загрузки fonts.zip"; exit 1; }
+
+# Временная распаковка
+rm -rf /tmp/fonts-tmp && mkdir -p /tmp/fonts-tmp
+unzip -oq /tmp/fonts.zip -d /tmp/fonts-tmp || { echo "Ошибка распаковки fonts.zip"; exit 1; }
+
+# Копируем все файлы напрямую в /usr/share/fonts (без вложенной папки)
+cp -rf /tmp/fonts-tmp/* /usr/share/fonts/ || { echo "Ошибка копирования шрифтов"; exit 1; }
+
+# Удаляем временные файлы
+rm -rf /tmp/fonts.zip /tmp/fonts-tmp
+
+# Обновляем кеш шрифтов
+echo -e "\033[1;34m Обновление кеша шрифтов... \033[0m"
+fc-cache -fv > /dev/null
 
 echo -e "\033[1;32m Загрузка $HOME_DIR/.config/neofetch/config.conf \033[0m"
 wget -q -O "$HOME_DIR/.config/neofetch/config.conf" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/neofetch/config.conf" || { echo "Ошибка загрузки neofetch config.conf"; exit 1; }
@@ -145,16 +169,24 @@ wget -q -O /tmp/theme.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arc
 wget -q -O /tmp/icons.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Mkos-Big-Sur.tar.xz"
 wget -q -O /tmp/cursors.tar.gz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/oreo-teal-cursors.tar.gz"
 
+# Распаковка тем
 echo -e "\033[1;32m Распаковка тем \033[0m"
-mkdir -p /usr/share/themes/custom-themes
-mkdir -p /usr/share/icons/custom-cursors
-mkdir -p /usr/share/icons
+mkdir -p /usr/share/themes /usr/share/icons
 
-tar -xf /tmp/theme.tar.xz -C /usr/share/themes/custom-themes
-tar -xf /tmp/icons.tar.xz -C /usr/share/icons/
-tar -xzf /tmp/cursors.tar.gz -C /usr/share/icons/custom-cursors
+# Theme
+rm -rf /tmp/theme-tmp && mkdir -p /tmp/theme-tmp
+tar -xf /tmp/theme.tar.xz -C /tmp/theme-tmp
+cp -rf /tmp/theme-tmp/* /usr/share/themes/
 
-rm -f /tmp/theme.tar.xz /tmp/icons.tar.xz /tmp/cursors.tar.gz
+# Icons
+rm -rf /tmp/icons-tmp && mkdir -p /tmp/icons-tmp
+tar -xf /tmp/icons.tar.xz -C /tmp/icons-tmp
+cp -rf /tmp/icons-tmp/* /usr/share/icons/
+
+# Cursors
+rm -rf /tmp/cursors-tmp && mkdir -p /tmp/cursors-tmp
+tar -xzf /tmp/cursors.tar.gz -C /tmp/cursors-tmp
+cp -rf /tmp/cursors-tmp/* /usr/share/icons/
 
 # Проверяем права на домашние конфиги
 echo -e "\033[1;32m Исправляем права на домашние конфиги \033[0m"
@@ -202,7 +234,7 @@ fi
 
 # Установка нужных AUR пакетов
 echo -e "\n\033[1;32m [*] Установка AUR пакетов... \033[0m"
-yay -S --noconfirm --needed audacious-gtk3 audacious-plugins-gtk3 autotiling neofetch 
+yay -S --noconfirm --needed audacious-gtk3 audacious-plugins-gtk3 autotiling neofetch sublime-text-4 
 EOC
 
 # Удаление временного правила sudo
@@ -212,6 +244,6 @@ rm -f /etc/sudoers.d/aur-temp
 EOF_CHROOT
 
 # --- Финал ---
-echo "Финал: размонтирование и завершение"
+echo -e "\033[1;34m Финал: размонтирование и завершение \033[0m"
 umount -R /mnt
-echo "Установка завершена. Можно перезагружаться!"
+echo -e "\033[1;34m Установка завершена. Можно перезагружаться! \033[0m"
