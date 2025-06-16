@@ -8,26 +8,6 @@
 # fading = false
 fading = false;
 
-# Opacity change between steps while fading in. (0.01 - 1.0, defaults to 0.028)
-# fade-in-step = 0.028
-fade-in-step = 0.03;
-
-# Opacity change between steps while fading out. (0.01 - 1.0, defaults to 0.03)
-# fade-out-step = 0.03
-fade-out-step = 0.03;
-
-# The time between steps in fade step, in milliseconds. (> 0, defaults to 10)
-# fade-delta = 10
-
-# Specify a list of conditions of windows that should not be faded.
-# fade-exclude = []
-
-# Do not fade on window open/close.
-# no-fading-openclose = false
-
-# Do not fade destroyed ARGB windows with WM frame. Workaround of bugs in Openbox, Fluxbox, etc.
-# no-fading-destroyed-argb = false
-
 #################################
 #           Corners             #
 #################################
@@ -35,7 +15,7 @@ fade-out-step = 0.03;
 # Sets the radius of rounded window corners. When > 0, the compositor will
 # round the corners of windows. Does not interact well with
 # `transparent-clipping`.
-corner-radius = 10
+corner-radius = 5
 
 # Exclude conditions for rounded corners.
 rounded-corners-exclude = [
@@ -60,7 +40,7 @@ rounded-corners-exclude = [
 # unless explicitly requested using the wintypes option.
 #
 # shadow = false
-shadow = true;
+shadow = false;
 
 # The blur radius for shadows, in pixels. (defaults to 12)
 # shadow-radius = 12
@@ -184,23 +164,23 @@ vsync = false;
 # child that has 'WM_STATE') and mark them as active.
 #
 # mark-wmwin-focused = false
-mark-wmwin-focused = true;
+mark-wmwin-focused = false;
 
 # Mark override-redirect windows that doesn't have a child window with 'WM_STATE' focused.
 # mark-ovredir-focused = false
-mark-ovredir-focused = true;
+mark-ovredir-focused = false;
 
 # Try to detect windows with rounded corners and don't consider them
 # shaped windows. The accuracy is not very high, unfortunately.
 #
 # detect-rounded-corners = false
-detect-rounded-corners = true;
+detect-rounded-corners = false;
 
 # Detect '_NET_WM_OPACITY' on client windows, useful for window managers
 # not passing '_NET_WM_OPACITY' of client windows to frame windows.
 #
 # detect-client-opacity = false
-detect-client-opacity = true;
+detect-client-opacity = false;
 
 # DEPRECATED: Specify refresh rate of the screen. If not specified or 0,
 # picom will try detecting this with X RandR extension.
@@ -229,7 +209,7 @@ detect-client-opacity = true;
 # in the same group focused at the same time.
 #
 # detect-transient = false
-detect-transient = true;
+detect-transient = false;
 
 # Use 'WM_CLIENT_LEADER' to group windows, and consider windows in the same
 # group focused at the same time. This usually means windows from the same application
@@ -276,7 +256,7 @@ detect-transient = true;
 # The opposing option is use-damage
 #
 # no-use-damage = false
-use-damage = true;
+use-damage = false;
 
 # Use X Sync fence to sync clients' draw calls, to make sure all draw
 # calls are finished before picom starts drawing. Needed on nvidia-drivers
@@ -335,37 +315,4 @@ log-level = "warn";
 # Write process ID to a file.
 # write-pid-path = "/path/to/your/log/file"
 
-# Window type settings
-#
-# 'WINDOW_TYPE' is one of the 15 window types defined in EWMH standard:
-#     "unknown", "desktop", "dock", "toolbar", "menu", "utility",
-#     "splash", "dialog", "normal", "dropdown_menu", "popup_menu",
-#     "tooltip", "notification", "combo", and "dnd".
-#
-# Для каждого типа окна доступны следующие параметры: ::
-#
-# затенение (fade), затеняемость (shadow):::
-# Управление настройками затенения (fade) для конкретного типа окна.
-#
-# непрозрачность (opacity):::
-# Управляет непрозрачностью по умолчанию для типа окна.
-#
-# фокус (focus):::
-# Определяет, должно ли окно этого типа всегда считаться сфокусированным.
-# (По умолчанию этот параметр включен для всех типов окон, кроме "обычных" и "диалоговых".)
-#
-# функция полной тени(full-shadow):::
-# Определяет, будет ли тень отображаться под теми частями окна, которые вы
-# обычно не сможете увидеть. Полезно, когда в окне есть отдельные части.
-# прозрачный, и вы хотите, чтобы в этих областях были тени.
-#
-# клип-тень-вверху(clip-shadow-above)):::
-# Контролирует, должны ли тени, которые были бы нарисованы над окном,
-# быть обрезанным. Полезно для окон док-станции, которые не должны иметь тени, нарисованной сверху.
-#
-# повторить -игнорировать (redir-ignore):::
-# Определяет, должен ли этот тип окон приводить к тому, что экран становится
-# перенаправлено снова после того, как было отменено перенаправление. Если у вас есть неисправленный, если это возможно
-# установлен и не хочет, чтобы определенное окно вызывало ненужное перенаправление экрана,
-# вы можете установить для этого значения значение "истина`.
-#
+
