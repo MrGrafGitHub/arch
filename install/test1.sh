@@ -137,6 +137,23 @@ cp -rf /tmp/polybar-tmp/polybar/* "$HOME_DIR/.config/polybar/"
 chown -R $USERNAME:$USERNAME "$HOME_DIR/.config/polybar"
 find "$HOME_DIR/.config/polybar" -type f -name "*.sh" -exec chmod +x {} \;
 
+echo -e "\033[1;32m Загрузка и установка системных шрифтов \033[0m"
+wget -q -O /tmp/fonts.zip "https://github.com/MrGrafGitHub/arch/raw/main/font/fonts.zip" || { echo "Ошибка загрузки fonts.zip"; exit 1; }
+
+# Временная распаковка
+rm -rf /tmp/fonts-tmp && mkdir -p /tmp/fonts-tmp
+unzip -oq /tmp/fonts.zip -d /tmp/fonts-tmp || { echo "Ошибка распаковки fonts.zip"; exit 1; }
+
+# Копируем все файлы напрямую в /usr/share/fonts (без вложенной папки)
+cp -rf /tmp/fonts-tmp/* /usr/share/fonts/ || { echo "Ошибка копирования шрифтов"; exit 1; }
+
+# Удаляем временные файлы
+rm -rf /tmp/fonts.zip /tmp/fonts-tmp
+
+# Обновляем кеш шрифтов
+echo -e "\033[1;34m Обновление кеша шрифтов... \033[0m"
+fc-cache -fv > /dev/null
+
 echo -e "\033[1;32m Загрузка $HOME_DIR/.config/neofetch/config.conf \033[0m"
 wget -q -O "$HOME_DIR/.config/neofetch/config.conf" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/neofetch/config.conf" || { echo "Ошибка загрузки neofetch config.conf"; exit 1; }
 chown $USERNAME:$USERNAME "$HOME_DIR/.config/neofetch/config.conf"
@@ -227,6 +244,6 @@ rm -f /etc/sudoers.d/aur-temp
 EOF_CHROOT
 
 # --- Финал ---
-echo "Финал: размонтирование и завершение"
+echo -e "\033[1;34m Финал: размонтирование и завершение \033[0m"
 umount -R /mnt
-echo "Установка завершена. Можно перезагружаться!"
+echo -e "\033[1;34m Установка завершена. Можно перезагружаться! \033[0m"
