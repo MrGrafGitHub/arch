@@ -81,7 +81,10 @@ bindsym $mod+z floating toggle
 
 # variables for left and right monitor 
 # (assuming names DP-1 and DP-3 with DP-1 being left of DP-3)
-set $monC DVI-D-0
+set $monC Virtual-1
+
+
+
 
 # variables for workpacenames; 
 
@@ -93,8 +96,6 @@ set $monC " btop "
 set $monC " tools "
 
 # assign workspaces to specific outputs
-
-workspace $ws1C output $monC
 
 workspace $ws1C output $monC
 workspace $ws2C output $monC
@@ -125,14 +126,13 @@ bindsym $mod+Shift+Tab focus output right
 
 # move a window to a specific workpace; 
 # $mod+Shift for left side, $mod+Control for right side
-bindsym $mod+Control+1 move workspace $ws1C
 
-bindsym $mod+1 move workspace $ws1R
-bindsym $mod+2 move workspace $ws2C
-bindsym $mod+3 move workspace $ws3C
-bindsym $mod+4 move workspace $ws4C
-bindsym $mod+5 move workspace $ws5C
-bindsym $mod+6 move workspace $ws6C
+bindsym $mod+Shift+1 move workspace $ws1C
+bindsym $mod+Shift+2 move workspace $ws2C
+bindsym $mod+Shift+3 move workspace $ws3C
+bindsym $mod+Shift+4 move workspace $ws4C
+bindsym $mod+Shift+5 move workspace $ws5C
+bindsym $mod+Shift+6 move workspace $ws6C
 
 # reload the configuration file
 bindsym $mod+Shift+c reload
@@ -182,29 +182,30 @@ for_window [all] title_window_icon yes
 for_window [all] title_window_icon padding 5px
 
 #Убирает заголовки всем окнам
-#for_window [class="^.*"] border pixel 0#, border normal 0
+#, border normal 0
+for_window [class="^.*"] border pixel 1 
 
 
 
-for_window [class="TelegramDesktop"] border pixel 0, border normal 0
-for_window [class="Sublime_text"] border pixel 0, border normal 0
-for_window [class="Audacious"] border pixel 0#, border normal 0 
-for_window [class="KeePassXC"] border pixel 0, border normal 0
-for_window [class="flameshot"] border pixel 0, border normal 0
-for_window [class="Thunar"] border pixel 0, border normal 0
-for_window [class="Pcmanfm"] border pixel 0, border normal 0
-for_window [class="kitty"] border pixel 0, border normal 0
-for_window [class="obs"] border pixel 0#, border normal 0
+#for_window [class="TelegramDesktop"] border pixel 0, border normal 0
+#for_window [class="Sublime_text"] border pixel 0, border normal 0
+#for_window [class="Audacious"] border pixel 0#, border normal 0 
+#for_window [class="KeePassXC"] border pixel 0, border normal 0
+#for_window [class="flameshot"] border pixel 0, border normal 0
+#for_window [class="Thunar"] border pixel 0, border normal 0
+#for_window [class="Pcmanfm"] border pixel 0, border normal 0
+#for_window [class="kitty"] border pixel 0, border normal 0
+#for_window [class="obs"] border pixel 0#, border normal 0
 
-for_window [class="com-atlauncher-App"] border pixel 0, border normal 0
-for_window [class="Indicator.py"] border pixel 0, border normal 0
+#for_window [class="com-atlauncher-App"] border pixel 0, border normal 0
+#for_window [class="Indicator.py"] border pixel 0, border normal 0
 
-for_window [class="Microsoft-edge"] border pixel 0#, border normal 0
-for_window [class="YandexMusic"] border pixel 0#, border normal 0
-for_window [class="Pavucontrol"] border pixel 0#, border normal 0
+#for_window [class="Microsoft-edge"] border pixel 0#, border normal 0
+#for_window [class="YandexMusic"] border pixel 0#, border normal 0
+#for_window [class="Pavucontrol"] border pixel 0#, border normal 0
 
-for_window [class="com-atlauncher-App"] border pixel 0#, border normal 0
-for_window [class="Minecraft"] border pixel 0#, border normal 0
+#for_window [class="com-atlauncher-App"] border pixel 0#, border normal 0
+#for_window [class="Minecraft"] border pixel #0#, border normal 0
 for_window [class="ONLYOFFICE Desktop Editors"] border pixel 0#, border normal 0
 
 #for_window [class="Xfce4-panel"] border pixel 0, border normal 0
@@ -219,7 +220,7 @@ default_floating_border pixel 0
 gaps inner 10
 
 # внешние отступы
-gaps outer 10
+gaps outer 2
 
 # Мои комбинации
 bindsym $mod+e exec thunar
@@ -227,15 +228,36 @@ bindsym $mod+v exec pavucontrol
 bindsym $mod+t exec lxtask
 bindsym $mod+shift+s exec flameshot gui
 
-bindsym $mod+o exec openconnect-gui
+# bindsym $mod+o exec openconnect-gui
 
-bindsym $mod+shift+p exec picom -b --config /home/mrgraf/.config/i3/picom
+# setxkbmap -layout "us,ru" -option "grp:win_space_toggle"
+
+
+
+exec picom -b --config /home/mrgraf/.config/i3/picom.conf
+exec --no-startup-id xfsettingsd 
+exec --no-startup-id xfce4-notifyd
+exec --no-startup-id thunar --daemon
+
+
+bindsym $mod+space exec --no-startup-id ~/.config/i3/switch-layout.sh
+
+
+
+exec_always xrandr --output Virtual-1 --primary --mode 1920x1080 --pos 0x0 --rotate normal --output Virtual-2 --off --output Virtual-3 --off --output Virtual-4 --off --output Virtual-5 --off --output Virtual-6 --off --output Virtual-7 --off --output Virtual-8 --off
+
+
+
+
+
+bindsym $mod+shift+p exec picom -b --config /home/mrgraf/.config/i3/picom.conf
 bindsym $mod+shift+o exec killall -2 picom
 
 # Блокировка экрана
 #bindsym $mod+l exec /home/$USER/.config/scripts/lock
 
 # Автозапуск
+exec_always /home/mrgraf/.config/polybar/launch.sh 
 exec --no-startup-id numlockx on
 exec --no-startup-id nitrogen --restore; sleep 1 
 exec_always --no-startup-id autotiling
@@ -253,5 +275,4 @@ for_window [class="Xfce4-panel" instance="xfce4-panel"] floating enable
 
 #for_window [class="^.*$"] no_focus -- для всех окон
 for_window [class="steam"] no_focus
-
 
