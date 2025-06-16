@@ -124,7 +124,7 @@ echo -e "\033[1;32m Загрузка конфигов i3 \033[0m"
 wget -q -O "/tmp/i3.zip" "https://github.com/MrGrafGitHub/arch/raw/main/configs/i3.zip" || { echo "Ошибка загрузки i3.zip"; exit 1; }
 rm -rf /tmp/i3-tmp && mkdir -p /tmp/i3-tmp
 unzip -oq /tmp/i3.zip -d /tmp/i3-tmp || { echo "Ошибка распаковки i3.zip"; exit 1; }
-cp -rf /tmp/i3-tmp/* "$HOME_DIR/.config/i3/"
+cp -rf /tmp/i3-tmp/i3/* "$HOME_DIR/.config/i3/"
 chown -R $USERNAME:$USERNAME "$HOME_DIR/.config/i3"
 find "$HOME_DIR/.config/i3" -type f -name "*.sh" -exec chmod +x {} \;
 
@@ -133,7 +133,7 @@ echo -e "\033[1;32m Загрузка конфигов polybar \033[0m"
 wget -q -O "/tmp/polybar.zip" "https://github.com/MrGrafGitHub/arch/raw/main/configs/polybar.zip" || { echo "Ошибка загрузки polybar.zip"; exit 1; }
 rm -rf /tmp/polybar-tmp && mkdir -p /tmp/polybar-tmp
 unzip -oq /tmp/polybar.zip -d /tmp/polybar-tmp || { echo "Ошибка распаковки polybar.zip"; exit 1; }
-cp -rf /tmp/polybar-tmp/* "$HOME_DIR/.config/polybar/"
+cp -rf /tmp/polybar-tmp/polybar/* "$HOME_DIR/.config/polybar/"
 chown -R $USERNAME:$USERNAME "$HOME_DIR/.config/polybar"
 find "$HOME_DIR/.config/polybar" -type f -name "*.sh" -exec chmod +x {} \;
 
