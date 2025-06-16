@@ -26,15 +26,15 @@ mount "${DISK}1" /mnt/boot
 
 # --- Установка базовой системы ---
 echo -e "\n\033[1;32m Установка базовой системы \033[0m"
-pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano networkmanager sudo git xf86-video-vmware \
-xorg-server xorg-xinit xfce4-netload-plugin xfce4-notifyd xfce4-panel  dbus wget \
-xfce4-pulseaudio-plugin xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-whiskermenu-plugin \
-xfce4-xkb-plugin xfconf network-manager-applet ttf-font-awesome \
+pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano networkmanager sudo git \
+xorg-server xorg-xinit  dbus wget \
+xfconf xfce4-notifyd xfce4-settings \
+network-manager-applet ttf-font-awesome \
 thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman ntfs-3g \
 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
-xarchiver unrar unzip p7zip \
+xarchiver unrar unzip p7zip zip \
 numlockx kitty firefox rofi nitrogen bash-completion lxtask flameshot keepassxc mpv \
-pulseaudio-rtp pulseaudio-zeroconf i3 picom 
+pulseaudio-rtp pulseaudio-zeroconf i3 picom polybar lxappearance kvantum-qt5 
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -113,40 +113,31 @@ systemctl enable ly
 # Создаём каталоги для конфигов под пользователем
 mkdir -p "$HOME_DIR/.config/i3"
 mkdir -p "$HOME_DIR/.config/neofetch"
-mkdir -p "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml"
 mkdir -p "$HOME_DIR/.config/nitrogen"
+mkdir -p "$HOME_DIR/.config/polybar"
 mkdir -p "$HOME_DIR/Wallpapers"
-mkdir -p "$HOME_DIR/.config/autostart"
 
 # Загружаем конфиги под пользователем
 
-echo -e "\033[1;32m Загрузка $HOME_DIR/.config/i3/config \033[0m"
-wget -q -O "$HOME_DIR/.config/i3/config" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/i3/test/config" || { echo "Ошибка загрузки i3 config"; exit 1; }
-chown $USERNAME:$USERNAME "$HOME_DIR/.config/i3/config"
+echo -e "\033[1;32m Загрузка конфигов i3 \033[0m"
+wget -q -O "/tmp/i3.zip" "https://github.com/MrGrafGitHub/arch/raw/main/configs/i3.zip" || { echo "Ошибка загрузки i3.zip"; exit 1; }
+unzip -oq "/tmp/i3.zip" -d "$HOME_DIR/.config/i3/" || { echo "Ошибка распаковки i3.zip"; exit 1; }
+chown -R $USERNAME:$USERNAME "$HOME_DIR/.config/i3"
 
-echo -e "\033[1;32m Загрузка $HOME_DIR/.config/i3/picom.conf \033[0m"
-wget -q -O "$HOME_DIR/.config/i3/picom.conf" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/i3/test/picom" || { echo "Ошибка загрузки picom.conf"; exit 1; }
-chown $USERNAME:$USERNAME "$HOME_DIR/.config/i3/picom.conf"
+echo -e "\033[1;32m Загрузка конфигов polybar \033[0m"
+wget -q -O "/tmp/polybar.zip" "https://github.com/MrGrafGitHub/arch/raw/main/configs/polybar.zip" || { echo "Ошибка загрузки polybar.zip"; exit 1; }
+unzip -oq "/tmp/polybar.zip" -d "$HOME_DIR/.config/polybar/" || { echo "Ошибка распаковки polybar.zip"; exit 1; }
+chown -R $USERNAME:$USERNAME "$HOME_DIR/.config/polybar"
+
 
 echo -e "\033[1;32m Загрузка $HOME_DIR/.config/neofetch/config.conf \033[0m"
 wget -q -O "$HOME_DIR/.config/neofetch/config.conf" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/neofetch/config.conf" || { echo "Ошибка загрузки neofetch config.conf"; exit 1; }
 chown $USERNAME:$USERNAME "$HOME_DIR/.config/neofetch/config.conf"
 
-echo -e "\033[1;32m Загрузка $HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml \033[0m"
-wget -q -O "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" || { echo "Ошибка загрузки xfce4-panel.xml"; exit 1; }
-chown $USERNAME:$USERNAME "$HOME_DIR/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"
-
 echo -e "\033[1;32m Загрузка $HOME_DIR/Wallpapers/wallpaper.jpg \033[0m"
 wget -q -O "$HOME_DIR/Wallpapers/wallpaper.jpg" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/assets/wallpaper.jpg" || { echo "Ошибка загрузки wallpaper.jpg"; exit 1; }
 chown $USERNAME:$USERNAME "$HOME_DIR/Wallpapers/wallpaper.jpg"
 
-# Для PulseAudio файлы в /etc/pulse — нужна root-права
-echo -e "\n\033[1;32m Добавление load-module module-device-manager в pulse \033[0m"
-for FILE in /etc/pulse/default.pa /etc/pulse/system.pa; do
-    if ! grep -q '^load-module module-device-manager' "$FILE"; then
-        echo 'load-module module-device-manager' >> "$FILE"
-    fi
-done
 
 # Распаковка тем — нужно от root, в нужные каталоги
 echo -e "\033[1;32m Загрузка тем в /tmp \033[0m"
@@ -179,23 +170,6 @@ bgcolor=#000000
 EOF
 
 chown "$USERNAME:$USERNAME" "$HOME_DIR/.config/nitrogen/bg-saved.cfg"
-
-echo -e "\033[1;32m Загрузка и установка автозапуска i3 \033[0m"
-cat > "$HOME_DIR/.config/autostart/i3.desktop" <<EOF
-[Desktop Entry]
-Encoding=UTF-8
-Version=0.9.4
-Type=Application
-Name=i3
-Comment=i3
-Exec=i3
-OnlyShowIn=XFCE;
-RunHook=0
-StartupNotify=false
-Terminal=false
-Hidden=false
-EOF
-chown "$USERNAME:$USERNAME" "$HOME_DIR/.config/autostart/i3.desktop"
 
 echo -e "\033[1;34m Настройка завершена \033[0m"
 
