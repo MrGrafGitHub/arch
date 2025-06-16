@@ -34,7 +34,7 @@ thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman ntfs-3g \
 pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
 xarchiver unrar unzip p7zip zip \
 numlockx kitty firefox rofi nitrogen bash-completion lxtask flameshot keepassxc mpv \
-pulseaudio-rtp pulseaudio-zeroconf i3 picom polybar lxappearance kvantum-qt5 
+pulseaudio-rtp pulseaudio-zeroconf i3 picom polybar kvantum-qt5 python-gobject python-gitdb pavucontrol arandr 
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -217,7 +217,7 @@ fi
 
 # Установка нужных AUR пакетов
 echo -e "\n\033[1;32m [*] Установка AUR пакетов... \033[0m"
-yay -S --noconfirm --needed audacious-gtk3 audacious-plugins-gtk3 autotiling neofetch 
+yay -S --noconfirm --needed audacious-gtk3 audacious-plugins-gtk3 autotiling neofetch sublime-text-4 
 EOC
 
 # Удаление временного правила sudo
