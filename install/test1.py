@@ -11,11 +11,11 @@ class LogView(Static):
     """
     # Виджет для отображения логов установки.
     """
-    def appendline(self, line: str) -> None:
+    def append_line (self, line: str) -> None:
         # Добавляет строку в лог и прокручивает в конец.
         newtext = f"{self.renderable}\n{line}" if self.renderable else line
         self.update(newtext)
-        self.scrollend(animate=False)
+        self.scroll_end(animate=False)
 
 class InstallerApp(App):
     
@@ -25,13 +25,13 @@ class InstallerApp(App):
     Screen {
         layout: vertical;
     }
-    log {
+    #log {
         height: 1fr;
         border: heavy $accent;
         padding: 1;
         overflow-y: auto;
     }
-    status {
+    #status {
         height: auto;
         border: heavy $accent;
         padding: 1;
@@ -45,11 +45,11 @@ class InstallerApp(App):
             yield Static("[b]Текущий этап установки[/b]", id="status-text")
             yield ProgressBar(total=100, id="progress-bar")
 
-    async def onmount(self) -> None:
+    async def on_mount(self) -> None:
         # Выполняется при монтировании приложения. 
-        self.logview = self.queryone("log", LogView)
-        self.statustext = self.queryone("status-text", Static)
-        self.progressbar = self.queryone("progress-bar", ProgressBar)
+        self.logview = self.query_one ("log", LogView)
+        self.statustext = self.query_one ("status-text", Static)
+        self.progressbar = self.query_one ("progress-bar", ProgressBar)
         try:
             await self.runinstallation()
             self.setstatus("Установка завершена!", 100)
@@ -63,7 +63,7 @@ class InstallerApp(App):
 
     def log(self, text: str) -> None:
         # Добавляет запись в лог и записывает в файл. 
-        self.logview.appendline(text)
+        self.logview.append_line(text)
         try: #  Добавляем обработку исключений для записи в лог
             with open("/tmp/installer.log", "a") as f:
                 f.write(text + "\n")
@@ -74,7 +74,7 @@ class InstallerApp(App):
         # Запускает команду в subprocess и логирует вывод. 
         cmdstr = ' '.join(shlex.quote(c) for c in cmd)
         self.log(f"$ {cmdstr}")
-        process = await asyncio.createsubprocessexec(
+        process = await asyncio.create_subprocess_exec(
             cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
@@ -140,8 +140,8 @@ class InstallerApp(App):
         self.setstatus("Настройка системы", 30)
         await self.runcmd(["arch-chroot", "/mnt", "ln", "-sf", "/usr/share/zoneinfo/Europe/Moscow", "/etc/localtime"])
         await self.runcmd(["arch-chroot", "/mnt", "hwclock", "--systohc"])
-        await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", "echo LANG=ruRU.UTF-8 > /etc/locale.conf"])
-        await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", "echo ruRU.UTF-8 UTF-8 >> /etc/locale.gen"])
+        await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", "echo LANG=ru_RU.UTF-8 > /etc/locale.conf"])
+        await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", "echo ru_RU.UTF-8 UTF-8 >> /etc/locale.gen"])
         await self.runcmd(["arch-chroot", "/mnt", "locale-gen"])
         await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", "echo KEYMAP=ru > /etc/vconsole.conf"])
         await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", "echo FONT=cyr-sun16 >> /etc/vconsole.conf"])
@@ -243,6 +243,6 @@ class InstallerApp(App):
         self.setstatus("Завершение", 100)
         await self.runcmd(["umount", "-R", "/mnt"])
 
-if name == "main":
+if __name__ == "__main__":
     app = InstallerApp()
     app.run()
