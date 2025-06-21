@@ -167,7 +167,7 @@ class InstallerApp(App):
 
         #  Установка и настройка Limine
         # Создаем файл limine.conf локально
-        self.set_status("Настройка Limine Bootloader", 40)
+        await self.set_status("Настройка Limine Bootloader", 40)
 
         limine_dir = "/mnt/boot/limine"
         os.makedirs(limine_dir, exist_ok=True)
