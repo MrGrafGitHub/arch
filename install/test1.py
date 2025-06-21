@@ -46,9 +46,9 @@ class InstallerApp(App):
 
     async def on_mount(self) -> None:
         # Выполняется при монтировании приложения. 
-        self.log_view = self.query_one ("log", LogView)
-        self.status_text = self.query_one ("status-text", Static)
-        self.progress_bar = self.query_one ("progress-bar", ProgressBar)
+        self.log_view = self.query_one ("#log", LogView)
+        self.status_text = self.query_one ("#status-text", Static)
+        self.progress_bar = self.query_one ("#progress-bar", ProgressBar)
         try:
             await self.run_installation()
             self.set_status("Установка завершена!", 100)
