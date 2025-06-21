@@ -170,7 +170,7 @@ class InstallerApp(App):
         # Создаем файл limine.conf локально
         await self.set_status("Limine: создание конфига", 40)
         # limine_path = os.path.join(limine_dir, "limine.conf")
-        limine_path = "/mnt/boot/limine"
+        limine_path = "/mnt/boot/limine/"
         with open(limine_path, "w", encoding="utf-8") as f:
             f.write(
                 "/+Arch Linux\n"
