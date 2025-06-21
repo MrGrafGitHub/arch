@@ -168,13 +168,7 @@ class InstallerApp(App):
         #  Установка и настройка Limine
         # Создаем файл limine.conf локально
         await self.set_status("Limine: Проверка директории", 38)
-        try:
-            limine_dir = "/mnt/boot/limine"
-            # os.makedirs(limine_dir, exist_ok=True)
-            await asyncio.to_thread(os.makedirs, limine_dir, exist_ok=True)
-        except Exception as e:
-            await self.write_log(f"[red]Ошибка при создании limine.conf: {e}[/red]")
-            raise
+        await self.run_cmd(["mkdir", "-p", "/mnt/boot/limine"])
 
         await self.set_status("Limine: создание конфига", 40)
         limine_path = os.path.join(limine_dir, "limine.conf")
