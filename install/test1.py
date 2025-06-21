@@ -5,22 +5,22 @@ from textual.containers import Vertical
 import subprocess
 import asyncio
 import shlex
-import os   Импортируем модуль os для проверки существования файлов
+import os #   Импортируем модуль os для проверки существования файлов
 
 class LogView(Static):
     """
-    Виджет для отображения логов установки.
+    # Виджет для отображения логов установки.
     """
     def appendline(self, line: str) -> None:
-        """Добавляет строку в лог и прокручивает в конец."""
+        # Добавляет строку в лог и прокручивает в конец.
         newtext = f"{self.renderable}\n{line}" if self.renderable else line
         self.update(newtext)
         self.scrollend(animate=False)
 
 class InstallerApp(App):
-    """
-    Приложение для автоматической установки Arch Linux.
-    """
+    
+    # Приложение для автоматической установки Arch Linux.
+    
     CSS = '''
     Screen {
         layout: vertical;
@@ -39,14 +39,14 @@ class InstallerApp(App):
     '''
 
     def compose(self) -> ComposeResult:
-        """Создает элементы интерфейса."""
+        # Создает элементы интерфейса.
         yield LogView(id="log")
         with Vertical(id="status"):
             yield Static("[b]Текущий этап установки[/b]", id="status-text")
             yield ProgressBar(total=100, id="progress-bar")
 
     async def onmount(self) -> None:
-        """Выполняется при монтировании приложения."""
+        # Выполняется при монтировании приложения. 
         self.logview = self.queryone("log", LogView)
         self.statustext = self.queryone("status-text", Static)
         self.progressbar = self.queryone("progress-bar", ProgressBar)
@@ -57,21 +57,21 @@ class InstallerApp(App):
             self.log(f"[b red]Ошибка установки: {e}[/b red]")
 
     def setstatus(self, text: str, progress: int) -> None:
-        """Обновляет статус установки и прогресс-бар."""
+        # Обновляет статус установки и прогресс-бар.
         self.statustext.update(f"[b]Текущий этап:[/b] {text}")
         self.progressbar.progress = progress
 
     def log(self, text: str) -> None:
-        """Добавляет запись в лог и записывает в файл."""
+        # Добавляет запись в лог и записывает в файл. 
         self.logview.appendline(text)
         try:  Добавляем обработку исключений для записи в лог
             with open("/tmp/installer.log", "a") as f:
                 f.write(text + "\n")
         except Exception as e:
-            print(f"Ошибка записи в лог-файл: {e}")  Выводим ошибку в консоль, если запись в файл не удалась
+            print(f"Ошибка записи в лог-файл: {e}")  # Выводим ошибку в консоль, если запись в файл не удалась
 
     async def runcmd(self, cmd: list, check=True) -> None:
-        """Запускает команду в subprocess и логирует вывод."""
+        # Запускает команду в subprocess и логирует вывод. 
         cmdstr = ' '.join(shlex.quote(c) for c in cmd)
         self.log(f"$ {cmdstr}")
         process = await asyncio.createsubprocessexec(
@@ -81,7 +81,7 @@ class InstallerApp(App):
         )
 
         async def readstream(stream, iserr=False):
-            """Читает поток вывода subprocess и логирует."""
+            # Читает поток вывода subprocess и логирует. 
             while True:
                 try:
                     line = await stream.readline()
@@ -109,7 +109,7 @@ class InstallerApp(App):
             raise RuntimeError(f"Command failed: {cmdstr} (Return code: {process.returncode})")
 
     async def runinstallation(self) -> None:
-        """Выполняет шаги установки."""
+        # Выполняет шаги установки. 
         self.setstatus("Создание разделов", 5)
         await self.runcmd(["parted", "-s", "/dev/sda", "mklabel", "gpt"])
         await self.runcmd(["parted", "-s", "/dev/sda", "mkpart", "primary", "fat32", "1MiB", "300MiB"])
@@ -150,15 +150,15 @@ class InstallerApp(App):
         await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", "echo root:root | chpasswd"])
         await self.runcmd(["arch-chroot", "/mnt", "useradd", "-m", "-G", "wheel", "mrgraf"])
         await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", "echo mrgraf:1234 | chpasswd"])
-         Используем безопасный способ добавления в sudoers
+        #  Используем безопасный способ добавления в sudoers
         await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", "echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/wheel"])
         await self.runcmd(["arch-chroot", "/mnt", "chmod", "0440", "/etc/sudoers.d/wheel"])
 
-         Обновление системы
+        #  Обновление системы
         self.setstatus("Обновление системы", 35)
         await self.runcmd(["arch-chroot", "/mnt", "pacman", "-Syu", "--noconfirm"])
 
-         Установка и настройка Limine
+        #  Установка и настройка Limine
         self.setstatus("Настройка Limine Bootloader", 40)
         await self.runcmd(["mkdir", "-p", "/mnt/boot/limine"])
         limineconf = (
@@ -170,19 +170,19 @@ class InstallerApp(App):
             "cmdline: root=LABEL=root rw quiet\n"
             "modulepath: boot():/initramfs-linux.img"
         )
-         Используем echo для записи в файл, чтобы избежать проблем с интерпретацией символов
+        #  Используем echo для записи в файл, чтобы избежать проблем с интерпретацией символов
         await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", f"echo \"{limineconf}\" > /boot/limine/limine.conf"])
         await self.runcmd(["cp", "/usr/share/limine/limine-bios.sys", "/mnt/boot/limine/"])
         await self.runcmd(["cp", "/usr/share/limine/limine-bios-cd.bin", "/mnt/boot/limine/"])
         await self.runcmd(["cp", "/usr/share/limine/limine-uefi-cd.bin", "/mnt/boot/limine/"])
         await self.runcmd(["arch-chroot", "/mnt", "limine", "bios-install", "/dev/sda"])
 
-         Установка менеджера входа ly
+        #  Установка менеджера входа ly
         self.setstatus("Настройка Display Manager", 50)
         await self.runcmd(["arch-chroot", "/mnt", "pacman", "-Sy", "--noconfirm", "ly"])
         await self.runcmd(["arch-chroot", "/mnt", "systemctl", "enable", "ly"])
 
-         Создание каталогов и загрузка конфигов
+        #  Создание каталогов и загрузка конфигов
         self.setstatus("Загрузка и настройка конфигураций", 60)
         await self.runcmd(["mkdir", "-p", "/mnt/home/mrgraf/.config/i3"])
         await self.runcmd(["mkdir", "-p", "/mnt/home/mrgraf/.config/neofetch"])
@@ -190,7 +190,7 @@ class InstallerApp(App):
         await self.runcmd(["mkdir", "-p", "/mnt/home/mrgraf/.config/polybar"])
         await self.runcmd(["mkdir", "-p", "/mnt/home/mrgraf/Wallpapers"])
 
-         Загрузка и распаковка конфигов i3
+        #  Загрузка и распаковка конфигов i3
         i3configurl = "https://github.com/MrGrafGitHub/arch/raw/main/configs/i3.zip"
         await self.runcmd(["wget", "-q", "-O", "/tmp/i3.zip", i3configurl])
         await self.runcmd(["mkdir", "-p", "/tmp/i3-tmp"])
@@ -198,7 +198,7 @@ class InstallerApp(App):
         await self.runcmd(["cp", "-rf", "/tmp/i3-tmp/i3/", "/mnt/home/mrgraf/.config/i3/"])
         await self.runcmd(["chown", "-R", "mrgraf:mrgraf", "/mnt/home/mrgraf/.config/i3"])
 
-         Загрузка и распаковка конфигов polybar
+        #  Загрузка и распаковка конфигов polybar
         polybarconfigurl = "https://github.com/MrGrafGitHub/arch/raw/main/configs/polybar.zip"
         await self.runcmd(["wget", "-q", "-O", "/tmp/polybar.zip", polybarconfigurl])
         await self.runcmd(["mkdir", "-p", "/tmp/polybar-tmp"])
@@ -206,7 +206,7 @@ class InstallerApp(App):
         await self.runcmd(["cp", "-rf", "/tmp/polybar-tmp/polybar/", "/mnt/home/mrgraf/.config/polybar/"])
         await self.runcmd(["chown", "-R", "mrgraf:mrgraf", "/mnt/home/mrgraf/.config/polybar"])
 
-         Загрузка и установка шрифтов
+        #  Загрузка и установка шрифтов
         fontsurl = "https://github.com/MrGrafGitHub/arch/raw/main/font/fonts.zip"
         await self.runcmd(["wget", "-q", "-O", "/tmp/fonts.zip", fontsurl])
         await self.runcmd(["mkdir", "-p", "/tmp/fonts-tmp"])
@@ -214,30 +214,30 @@ class InstallerApp(App):
         await self.runcmd(["cp", "-rf", "/tmp/fonts-tmp/", "/mnt/usr/share/fonts/"])
         await self.runcmd(["arch-chroot", "/mnt", "fc-cache", "-fv"])
 
-         Загрузка конфига neofetch
+        #  Загрузка конфига neofetch
         neofetchconfigurl = "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/neofetch/config.conf"
         await self.runcmd(["wget", "-q", "-O", "/mnt/home/mrgraf/.config/neofetch/config.conf", neofetchconfigurl])
         await self.runcmd(["chown", "mrgraf:mrgraf", "/mnt/home/mrgraf/.config/neofetch/config.conf"])
 
-         Загрузка обоев
+        #  Загрузка обоев
         wallpaperurl = "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/assets/wallpaper.jpg"
         await self.runcmd(["wget", "-q", "-O", "/mnt/home/mrgraf/Wallpapers/wallpaper.jpg", wallpaperurl])
         await self.runcmd(["chown", "mrgraf:mrgraf", "/mnt/home/mrgraf/Wallpapers/wallpaper.jpg"])
 
-         Настройка nitrogen
+        # Настройка nitrogen
         nitrogenconfig = f"[xin-1]\nfile=/home/mrgraf/Wallpapers/wallpaper.jpg\nmode=4\nbgcolor=000000"
         await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", f"echo \"{nitrogenconfig}\" > /home/mrgraf/.config/nitrogen/bg-saved.cfg"])
         await self.runcmd(["chown", "mrgraf:mrgraf", "/mnt/home/mrgraf/.config/nitrogen/bg-saved.cfg"])
 
-         Установка yay и AUR пакетов
+        #  Установка yay и AUR пакетов
         self.setstatus("Установка AUR пакетов", 90)
-         Создаем временный файл sudoers для пользователя mrgraf
+        #  Создаем временный файл sudoers для пользователя mrgraf
         await self.runcmd(["arch-chroot", "/mnt", "bash", "-c", "echo 'mrgraf ALL=(ALL) NOPASSWD: /usr/bin/pacman, /usr/bin/makepkg' > /etc/sudoers.d/aur-temp"])
         await self.runcmd(["arch-chroot", "/mnt", "chmod", "0440", "/etc/sudoers.d/aur-temp"])
-         Устанавливаем yay и AUR пакеты от имени пользователя mrgraf
+        #  Устанавливаем yay и AUR пакеты от имени пользователя mrgraf
         await self.runcmd(["arch-chroot", "/mnt", "sudo", "-u", "mrgraf", "bash", "-c", "set -e && cd /home/mrgraf && if ! command -v yay >/dev/null 2>&1; then git clone https://aur.archlinux.org/yay.git ~/yay && cd yay && makepkg -si --noconfirm && cd .. && rm -rf yay; fi"])
         await self.runcmd(["arch-chroot", "/mnt", "sudo", "-u", "mrgraf", "bash", "-c", "yay -S --noconfirm --needed audacious-gtk3 audacious-plugins-gtk3 autotiling neofetch sublime-text-4"])
-         Удаляем временный файл sudoers
+        #  Удаляем временный файл sudoers
         await self.runcmd(["rm", "-f", "/mnt/etc/sudoers.d/aur-temp"])
 
         self.setstatus("Завершение", 100)
