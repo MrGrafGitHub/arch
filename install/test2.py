@@ -1,8 +1,3 @@
-конфиг лимайна лучше качать....
-
-
-
-
 from textual.app import App, ComposeResult
 from textual.widgets import Static, ProgressBar
 from textual.containers import Vertical
