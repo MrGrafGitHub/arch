@@ -1,7 +1,9 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Static, ProgressBar
 from textual.containers import Vertical
+import subprocess
 import asyncio
+import shlex
 
 class LogView(Static):
     def append_line(self, line: str) -> None:
@@ -10,7 +12,7 @@ class LogView(Static):
         self.scroll_end(animate=False)
 
 class InstallerApp(App):
-    CSS = """
+    CSS = '''
     Screen {
         layout: vertical;
     }
@@ -25,7 +27,7 @@ class InstallerApp(App):
         border: heavy $accent;
         padding: 1;
     }
-    """
+    '''
 
     def compose(self) -> ComposeResult:
         yield LogView(id="log")
@@ -37,31 +39,27 @@ class InstallerApp(App):
         self.log_view = self.query_one("#log", LogView)
         self.status_text = self.query_one("#status-text", Static)
         self.progress_bar = self.query_one("#progress-bar", ProgressBar)
-
-        steps = [
-        
-            ("Create Partitions", self.create_partitions),
-            ("Monitoring Partitions", self.monitor_partitions),
-            ("Installing Base Packages", self.install_base_packages),
-            ("Configuring System", self.configure_system),
-        ]
-
-        for step_name, step_function in steps:
-            self.set_status(step_name, 0)
-            await step_function()
-
-        self.set_status("Installation Complete!", 100)
+        try:
+            await self.run_installation()
+            self.set_status("Installation Complete!", 100)
+        except Exception as e:
+            self.log(f"[b red]Installation failed: {e}[/b red]")
 
     def set_status(self, text: str, progress: int) -> None:
         self.status_text.update(f"[b]Current Step:[/b] {text}")
         self.progress_bar.progress = progress
 
-    async def run_bash_script(self, bash_commands: str) -> None:
-        process = await asyncio.create_subprocess_shell(
-            bash_commands,
+    def log(self, text: str) -> None:
+        self.log_view.append_line(text)
+        with open("/tmp/installer.log", "a") as f:
+            f.write(text + "\n")
+
+    async def run_cmd(self, cmd: list, check=True) -> None:
+        self.log(f"$ {' '.join(shlex.quote(c) for c in cmd)}")
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            executable="/bin/bash"
+            stderr=asyncio.subprocess.PIPE
         )
 
         async def read_stream(stream, is_err=False):
@@ -71,283 +69,141 @@ class InstallerApp(App):
                     break
                 text = line.decode().strip()
                 if is_err:
-                    text = f"Error: {text}"
-                self.log_view.append_line(text)
-                self.refresh()  # просто вызов, без await
-                await asyncio.sleep(0)  # Yield control to allow UI updates
+                    text = f"[red]{text}[/red]"
+                self.log(text)
+                await asyncio.sleep(0)
 
-        try:
-            await asyncio.gather(
-                read_stream(process.stdout),
-                read_stream(process.stderr, is_err=True),
-            )
-        except Exception as e:
-            self.log_view.append_line(f"Error: {e}")
+        await asyncio.gather(
+            read_stream(process.stdout),
+            read_stream(process.stderr, is_err=True),
+        )
 
         await process.wait()
+        if check and process.returncode != 0:
+            raise RuntimeError(f"Command failed: {' '.join(cmd)}")
 
-    async def create_partitions(self) -> None:
-        self.set_status("Monitoring Partitions", 5)
-        bash_script = """
-        # Разметка с ext4 /boot
-        echo -e "\n\033[1;32mРазметка с ext4 /boot fat32\033[0m"
-        DISK="/dev/sda"
-        parted -s "$DISK" mklabel gpt
-        parted -s "$DISK" mkpart primary fat32 1MiB 300MiB   # /boot
-        parted -s "$DISK" mkpart primary ext4 300MiB 100%   # /
-        
-        mkfs.fat -F32 -n boot "${DISK}1"
-        mkfs.ext4 -L root "${DISK}2"
-        """
-        await self.run_bash_script(bash_script)
-        self.set_status("Monitoring Partitions", 5)
+    async def run_installation(self) -> None:
+        self.set_status("Creating Partitions", 5)
+        await self.run_cmd(["parted", "-s", "/dev/sda", "mklabel", "gpt"])
+        await self.run_cmd(["parted", "-s", "/dev/sda", "mkpart", "primary", "fat32", "1MiB", "300MiB"])
+        await self.run_cmd(["parted", "-s", "/dev/sda", "mkpart", "primary", "ext4", "300MiB", "100%"])
+        await self.run_cmd(["mkfs.fat", "-F32", "-n", "boot", "/dev/sda1"])
+        await self.run_cmd(["mkfs.ext4", "-L", "root", "/dev/sda2"])
 
-    async def monitor_partitions(self) -> None:
-        bash_script = """
-        # Монтируем основную систему
-        echo -e "\n\033[1;32mМонтируем основную систему\033[0m"
-        DISK="/dev/sda"
-        mount "${DISK}2" /mnt
-        mkdir -p /mnt/boot
-        mount "${DISK}1" /mnt/boot
-        """
-        await self.run_bash_script(bash_script)
-        self.set_status("Monitoring Partitions", 10)
+        self.set_status("Mounting", 10)
+        await self.run_cmd(["mount", "/dev/sda2", "/mnt"])
+        await self.run_cmd(["mkdir", "-p", "/mnt/boot"])
+        await self.run_cmd(["mount", "/dev/sda1", "/mnt/boot"])
 
-    async def install_base_packages(self) -> None:
-        bash_script = """
-        # --- Установка базовой системы ---
-        echo -e "\n\033[1;32m Установка базовой системы \033[0m"
-        pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano networkmanager sudo git \
-        xorg-server xorg-xinit  dbus wget \
-        xfconf xfce4-notifyd xfce4-settings \
-        network-manager-applet ttf-font-awesome \
-        thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman ntfs-3g \
-        pulseaudio pulseaudio-alsa pulseaudio-bluetooth pulseaudio-equalizer pulseaudio-jack pulseaudio-lirc \
-        xarchiver unrar unzip p7zip zip \
-        numlockx kitty firefox rofi nitrogen bash-completion lxtask flameshot keepassxc mpv telegram-desktop \
-        pulseaudio-rtp pulseaudio-zeroconf i3 picom polybar kvantum-qt5 python-gobject python-gitdb pavucontrol arandr 
-        
-        genfstab -U /mnt >> /mnt/etc/fstab
-        """
-        await self.run_bash_script(bash_script)
-        self.set_status("Installing Base Packages", 50)
+        self.set_status("Installing Base Packages", 20)
+        await self.run_cmd([
+            "pacstrap", "/mnt", "base", "base-devel", "linux", "linux-headers",
+            "linux-firmware", "limine", "nano", "networkmanager", "sudo", "git",
+            "xorg-server", "xorg-xinit", "dbus", "wget", "xfconf", "xfce4-notifyd",
+            "xfce4-settings", "network-manager-applet", "ttf-font-awesome",
+            "thunar", "thunar-archive-plugin", "thunar-media-tags-plugin", "thunar-volman",
+            "ntfs-3g", "pulseaudio", "pulseaudio-alsa", "pulseaudio-bluetooth",
+            "pulseaudio-equalizer", "pulseaudio-jack", "pulseaudio-lirc", "xarchiver",
+            "unrar", "unzip", "p7zip", "zip", "numlockx", "kitty", "firefox", "rofi",
+            "nitrogen", "bash-completion", "lxtask", "flameshot", "keepassxc", "mpv",
+            "telegram-desktop", "pulseaudio-rtp", "pulseaudio-zeroconf", "i3", "picom",
+            "polybar", "kvantum-qt5", "python-gobject", "python-gitdb", "pavucontrol", "arandr"
+        ])
 
-    async def configure_system(self) -> None:
-        bash_script = """
-        # --- Настройки внутри chroot ---
-        arch-chroot /mnt /bin/bash <<EOF_CHROOT
-        
-        USERNAME="mrgraf"
-        USERPASS="1234"
-        HOME_DIR="/home/$USERNAME"
-        ROOTPASS="root"
-        
-        # --- Локализация ---
-        echo -e "\n\033[1;32mЛокализация\033[0m"
-        echo "$HOSTNAME" > /etc/hostname
-        ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
-        hwclock --systohc
-        
-        echo "LANG=ru_RU.UTF-8" > /etc/locale.conf
-        echo "ru_RU.UTF-8 UTF-8" >> /etc/locale.gen
-        locale-gen
-        
-        echo "KEYMAP=ru" > /etc/vconsole.conf
-        echo "FONT=cyr-sun16" >> /etc/vconsole.conf
-        
-        # --- Сеть ---
-        echo -e "\n\033[1;32m Сеть \033[0m"
-        systemctl enable NetworkManager
-        systemctl enable dbus
-        
-        # --- Пользователи ---
-        echo -e "\n\033[1;32m Пользователи \033[0m"
-        echo "root:${ROOTPASS}" | chpasswd
-        useradd -m -G wheel ${USERNAME}
-        echo "${USERNAME}:${USERPASS}" | chpasswd
-        echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
-        
-        # --- Обновление ---
-        pacman -Syu --noconfirm
-        
-        # --- СТАВИМ ЗАГРУЗЧИК Limine ---
-        echo -e "\n\033[1;32m СТАВИМ ЗАГРУЗЧИК Limine \033[0m"
-        
-        # Убедимся, что есть директория /boot/limine
-        mkdir -p /boot/limine
-        
-        # Создаём конфиг Limine
-        echo -e "\n\033[1;32m Создаём конфиг Limine \033[0m"
-        cat > /boot/limine/limine.conf <<EOF
-        /+Arch Linux
-        comment: loader linux
-        
-        //Linux
-        protocol: linux
-        path: boot():/vmlinuz-linux
-        cmdline: root=LABEL=root rw quiet
-        module_path: boot():/initramfs-linux.img
-        EOF
-        
-        # Копируем необходимые файлы
-        echo -e "\n\033[1;32m Копируем необходимые файлы Limine \033[0m"
-        cp /usr/share/limine/limine-bios.sys /boot/limine/
-        cp /usr/share/limine/limine-bios-cd.bin /boot/limine/
-        cp /usr/share/limine/limine-uefi-cd.bin /boot/limine/
-        
-        # Устанавливаем Limine
-        echo -e "\n\033[1;32m Устанавливаем Limine \033[0m"
-        limine bios-install $DISK
-        
-        echo -e "\n\033[1;32mLimine успешно установлен и настроен!\033[0m"
-        
-        # --- Менеджер входа ly ---
-        echo -e "\n\033[1;32m Менеджер входа ly \033[0m"
-        pacman -Sy --noconfirm ly
-        systemctl enable ly
-        
-        # Создаём каталоги для конфигов под пользователем
-        mkdir -p "$HOME_DIR/.config/i3"
-        mkdir -p "$HOME_DIR/.config/neofetch"
-        mkdir -p "$HOME_DIR/.config/nitrogen"
-        mkdir -p "$HOME_DIR/.config/polybar"
-        mkdir -p "$HOME_DIR/Wallpapers"
-        
-        # Загружаем конфиги под пользователем
-        
-        # i3
-        echo -e "\033[1;32m Загрузка конфигов i3 \033[0m"
-        wget -q -O "/tmp/i3.zip" "https://github.com/MrGrafGitHub/arch/raw/main/configs/i3.zip" || { echo "Ошибка загрузки i3.zip"; exit 1; }
-        rm -rf /tmp/i3-tmp && mkdir -p /tmp/i3-tmp
-        unzip -oq /tmp/i3.zip -d /tmp/i3-tmp || { echo "Ошибка распаковки i3.zip"; exit 1; }
-        cp -rf /tmp/i3-tmp/i3/* "$HOME_DIR/.config/i3/"
-        chown -R $USERNAME:$USERNAME "$HOME_DIR/.config/i3"
-        find "$HOME_DIR/.config/i3" -type f -name "*.sh" -exec chmod +x {} \;
-        
-        # polybar
-        echo -e "\033[1;32m Загрузка конфигов polybar \033[0m"
-        wget -q -O "/tmp/polybar.zip" "https://github.com/MrGrafGitHub/arch/raw/main/configs/polybar.zip" || { echo "Ошибка загрузки polybar.zip"; exit 1; }
-        rm -rf /tmp/polybar-tmp && mkdir -p /tmp/polybar-tmp
-        unzip -oq /tmp/polybar.zip -d /tmp/polybar-tmp || { echo "Ошибка распаковки polybar.zip"; exit 1; }
-        cp -rf /tmp/polybar-tmp/polybar/* "$HOME_DIR/.config/polybar/"
-        chown -R $USERNAME:$USERNAME "$HOME_DIR/.config/polybar"
-        find "$HOME_DIR/.config/polybar" -type f -name "*.sh" -exec chmod +x {} \;
-        
-        echo -e "\033[1;32m Загрузка и установка системных шрифтов \033[0m"
-        wget -q -O /tmp/fonts.zip "https://github.com/MrGrafGitHub/arch/raw/main/font/fonts.zip" || { echo "Ошибка загрузки fonts.zip"; exit 1; }
-        
-        # Временная распаковка
-        rm -rf /tmp/fonts-tmp && mkdir -p /tmp/fonts-tmp
-        unzip -oq /tmp/fonts.zip -d /tmp/fonts-tmp || { echo "Ошибка распаковки fonts.zip"; exit 1; }
-        
-        # Копируем все файлы напрямую в /usr/share/fonts (без вложенной папки)
-        cp -rf /tmp/fonts-tmp/* /usr/share/fonts/ || { echo "Ошибка копирования шрифтов"; exit 1; }
-        
-        # Удаляем временные файлы
-        rm -rf /tmp/fonts.zip /tmp/fonts-tmp
-        
-        # Обновляем кеш шрифтов
-        echo -e "\033[1;34m Обновление кеша шрифтов... \033[0m"
-        fc-cache -fv > /dev/null
-        
-        echo -e "\033[1;32m Загрузка $HOME_DIR/.config/neofetch/config.conf \033[0m"
-        wget -q -O "$HOME_DIR/.config/neofetch/config.conf" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/neofetch/config.conf" || { echo "Ошибка загрузки neofetch config.conf"; exit 1; }
-        chown $USERNAME:$USERNAME "$HOME_DIR/.config/neofetch/config.conf"
-        
-        echo -e "\033[1;32m Загрузка $HOME_DIR/Wallpapers/wallpaper.jpg \033[0m"
-        wget -q -O "$HOME_DIR/Wallpapers/wallpaper.jpg" "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/assets/wallpaper.jpg" || { echo "Ошибка загрузки wallpaper.jpg"; exit 1; }
-        chown $USERNAME:$USERNAME "$HOME_DIR/Wallpapers/wallpaper.jpg"
-        
-        
-        # Распаковка тем — нужно от root, в нужные каталоги
-        echo -e "\033[1;32m Загрузка тем в /tmp \033[0m"
-        wget -q -O /tmp/theme.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Dracula-alt-style.tar.xz"
-        wget -q -O /tmp/icons.tar.xz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/Mkos-Big-Sur.tar.xz"
-        wget -q -O /tmp/cursors.tar.gz "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/theme/oreo-teal-cursors.tar.gz"
-        
-        # Распаковка тем
-        echo -e "\033[1;32m Распаковка тем \033[0m"
-        mkdir -p /usr/share/themes /usr/share/icons
-        
-        # Theme
-        rm -rf /tmp/theme-tmp && mkdir -p /tmp/theme-tmp
-        tar -xf /tmp/theme.tar.xz -C /tmp/theme-tmp
-        cp -rf /tmp/theme-tmp/* /usr/share/themes/
-        
-        # Icons
-        rm -rf /tmp/icons-tmp && mkdir -p /tmp/icons-tmp
-        tar -xf /tmp/icons.tar.xz -C /tmp/icons-tmp
-        cp -rf /tmp/icons-tmp/* /usr/share/icons/
-        
-        # Cursors
-        rm -rf /tmp/cursors-tmp && mkdir -p /tmp/cursors-tmp
-        tar -xzf /tmp/cursors.tar.gz -C /tmp/cursors-tmp
-        cp -rf /tmp/cursors-tmp/* /usr/share/icons/
-        
-        # Проверяем права на домашние конфиги
-        echo -e "\033[1;32m Исправляем права на домашние конфиги \033[0m"
-        chown -R "$USERNAME:$USERNAME" "$HOME_DIR/.config"
-        chown -R "$USERNAME:$USERNAME" "$HOME_DIR/Wallpapers"
-        
-        # Настройка nitrogen (под пользователем)
-        cat > "$HOME_DIR/.config/nitrogen/bg-saved.cfg" <<EOF
-        [xin_-1]
-        file=${HOME_DIR}/Wallpapers/wallpaper.jpg
-        mode=4
-        bgcolor=#000000
-        EOF
-        
-        chown "$USERNAME:$USERNAME" "$HOME_DIR/.config/nitrogen/bg-saved.cfg"
-        
-        echo -e "\033[1;34m Настройка завершена \033[0m"
-        
-        
-        # --- Установка yay и AUR пакетов от пользователя $USERNAME ---
-        echo -e "\n\033[1;32m Установка yay и AUR пакетов от пользователя \033[0m"
-        
-        
-        # Временное предоставление пароля для sudo без запроса
-        echo "$USERNAME ALL=(ALL) NOPASSWD: /usr/bin/pacman, /usr/bin/makepkg" > /etc/sudoers.d/aur-temp
-        chmod 0440 /etc/sudoers.d/aur-temp
-        
-        # Запуск от пользователя
-        echo -e "\n\033[1;32m Запуск от пользователя \033[0m"
-        sudo -u "$USERNAME" bash <<EOC
-        set -e  # Завершить выполнение при ошибке
-        
-        cd "/home/$USERNAME"
-        
-        # Проверка и установка yay
-        echo -e "\n\033[1;32m Проверка и установка yay \033[0m"
-        if ! command -v yay >/dev/null 2>&1; then
-            echo "[*] Клонирование yay из AUR..."
-            git clone https://aur.archlinux.org/yay.git ~/yay
-            cd yay
-            makepkg -si --noconfirm
-            cd ..
-            rm -rf yay
-        fi
-        
-        # Установка нужных AUR пакетов
-        echo -e "\n\033[1;32m [*] Установка AUR пакетов... \033[0m"
-        yay -S --noconfirm --needed audacious-gtk3 audacious-plugins-gtk3 autotiling neofetch sublime-text-4 
-        EOC
-        
-        # Удаление временного правила sudo
-        rm -f /etc/sudoers.d/aur-temp
-        
-        
-        EOF_CHROOT
-        
-        # --- Финал ---
-        echo -e "\033[1;34m Финал: размонтирование и завершение \033[0m"
-        umount -R /mnt
-        echo -e "\033[1;34m Установка завершена. Можно перезагружаться! \033[0m"
-        """
-        await self.run_bash_script(bash_script)
-        self.set_status("Configuring System", 100)
+        self.set_status("Configuring System", 30)
+        await self.run_cmd(["arch-chroot", "/mnt", "ln", "-sf", "/usr/share/zoneinfo/Europe/Moscow", "/etc/localtime"])
+        await self.run_cmd(["arch-chroot", "/mnt", "hwclock", "--systohc"])
+        await self.run_cmd(["arch-chroot", "/mnt", "bash", "-c", "echo LANG=ru_RU.UTF-8 > /etc/locale.conf"])
+        await self.run_cmd(["arch-chroot", "/mnt", "bash", "-c", "echo ru_RU.UTF-8 UTF-8 >> /etc/locale.gen"])
+        await self.run_cmd(["arch-chroot", "/mnt", "locale-gen"])
+        await self.run_cmd(["arch-chroot", "/mnt", "bash", "-c", "echo KEYMAP=ru > /etc/vconsole.conf"])
+        await self.run_cmd(["arch-chroot", "/mnt", "bash", "-c", "echo FONT=cyr-sun16 >> /etc/vconsole.conf"])
+        await self.run_cmd(["arch-chroot", "/mnt", "systemctl", "enable", "NetworkManager"])
+        await self.run_cmd(["arch-chroot", "/mnt", "systemctl", "enable", "dbus"])
+        await self.run_cmd(["arch-chroot", "/mnt", "bash", "-c", "echo root:root | chpasswd"])
+        await self.run_cmd(["arch-chroot", "/mnt", "useradd", "-m", "-G", "wheel", "mrgraf"])
+        await self.run_cmd(["arch-chroot", "/mnt", "bash", "-c", "echo mrgraf:1234 | chpasswd"])
+        await self.run_cmd(["arch-chroot", "/mnt", "bash", "-c", "echo '%wheel ALL=(ALL:ALL) ALL' >> /etc/sudoers"])
 
+        # Обновление системы
+        self.set_status("Updating System", 35)
+        await self.run_cmd(["arch-chroot", "/mnt", "pacman", "-Syu", "--noconfirm"])
+
+        # Установка и настройка Limine
+        self.set_status("Setting up Limine Bootloader", 40)
+        await self.run_cmd(["mkdir", "-p", "/mnt/boot/limine"])
+        limine_conf = (
+            "/+Arch Linux\n"
+            "comment: loader linux\n"
+            "//Linux\n"
+            "protocol: linux\n"
+            "path: boot():/vmlinuz-linux\n"
+            "cmdline: root=LABEL=root rw quiet\n"
+            "module_path: boot():/initramfs-linux.img"
+        )
+        await self.run_cmd(["bash", "-c", f"cat > /mnt/boot/limine/limine.conf <<'EOF'\n{limine_conf}\nEOF"])
+        await self.run_cmd(["cp", "/usr/share/limine/limine-bios.sys", "/mnt/boot/limine/"])
+        await self.run_cmd(["cp", "/usr/share/limine/limine-bios-cd.bin", "/mnt/boot/limine/"])
+        await self.run_cmd(["cp", "/usr/share/limine/limine-uefi-cd.bin", "/mnt/boot/limine/"])
+        await self.run_cmd(["arch-chroot", "/mnt", "limine", "bios-install", "/dev/sda"])
+
+        # Установка менеджера входа ly
+        self.set_status("Setting up Display Manager", 50)
+        await self.run_cmd(["arch-chroot", "/mnt", "pacman", "-Sy", "--noconfirm", "ly"])
+        await self.run_cmd(["arch-chroot", "/mnt", "systemctl", "enable", "ly"])
+
+        # Создание каталогов и загрузка конфигов
+        self.set_status("Downloading and Setting Up Configurations", 60)
+        await self.run_cmd(["mkdir", "-p", "/mnt/home/mrgraf/.config/i3"])
+        await self.run_cmd(["mkdir", "-p", "/mnt/home/mrgraf/.config/neofetch"])
+        await self.run_cmd(["mkdir", "-p", "/mnt/home/mrgraf/.config/nitrogen"])
+        await self.run_cmd(["mkdir", "-p", "/mnt/home/mrgraf/.config/polybar"])
+        await self.run_cmd(["mkdir", "-p", "/mnt/home/mrgraf/Wallpapers"])
+
+        # Загрузка и распаковка конфигов i3
+        await self.run_cmd(["wget", "-q", "-O", "/tmp/i3.zip", "https://github.com/MrGrafGitHub/arch/raw/main/configs/i3.zip"])
+        await self.run_cmd(["mkdir", "-p", "/tmp/i3-tmp"])
+        await self.run_cmd(["unzip", "-oq", "/tmp/i3.zip", "-d", "/tmp/i3-tmp"])
+        await self.run_cmd(["cp", "-rf", "/tmp/i3-tmp/i3/*", "/mnt/home/mrgraf/.config/i3/"])
+        await self.run_cmd(["chown", "-R", "mrgraf:mrgraf", "/mnt/home/mrgraf/.config/i3"])
+
+        # Загрузка и распаковка конфигов polybar
+        await self.run_cmd(["wget", "-q", "-O", "/tmp/polybar.zip", "https://github.com/MrGrafGitHub/arch/raw/main/configs/polybar.zip"])
+        await self.run_cmd(["mkdir", "-p", "/tmp/polybar-tmp"])
+        await self.run_cmd(["unzip", "-oq", "/tmp/polybar.zip", "-d", "/tmp/polybar-tmp"])
+        await self.run_cmd(["cp", "-rf", "/tmp/polybar-tmp/polybar/*", "/mnt/home/mrgraf/.config/polybar/"])
+        await self.run_cmd(["chown", "-R", "mrgraf:mrgraf", "/mnt/home/mrgraf/.config/polybar"])
+
+        # Загрузка и установка шрифтов
+        await self.run_cmd(["wget", "-q", "-O", "/tmp/fonts.zip", "https://github.com/MrGrafGitHub/arch/raw/main/font/fonts.zip"])
+        await self.run_cmd(["mkdir", "-p", "/tmp/fonts-tmp"])
+        await self.run_cmd(["unzip", "-oq", "/tmp/fonts.zip", "-d", "/tmp/fonts-tmp"])
+        await self.run_cmd(["cp", "-rf", "/tmp/fonts-tmp/*", "/mnt/usr/share/fonts/"])
+        await self.run_cmd(["arch-chroot", "/mnt", "fc-cache", "-fv"])
+
+        # Загрузка конфига neofetch
+        await self.run_cmd(["wget", "-q", "-O", "/mnt/home/mrgraf/.config/neofetch/config.conf", "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/configs/neofetch/config.conf"])
+        await self.run_cmd(["chown", "mrgraf:mrgraf", "/mnt/home/mrgraf/.config/neofetch/config.conf"])
+
+        # Загрузка обоев
+        await self.run_cmd(["wget", "-q", "-O", "/mnt/home/mrgraf/Wallpapers/wallpaper.jpg", "https://raw.githubusercontent.com/MrGrafGitHub/arch/main/assets/wallpaper.jpg"])
+        await self.run_cmd(["chown", "mrgraf:mrgraf", "/mnt/home/mrgraf/Wallpapers/wallpaper.jpg"])
+
+        # Настройка nitrogen
+        nitrogen_config = f"[xin_-1]\nfile=/home/mrgraf/Wallpapers/wallpaper.jpg\nmode=4\nbgcolor=#000000"
+        await self.run_cmd(["bash", "-c", f"cat > /mnt/home/mrgraf/.config/nitrogen/bg-saved.cfg <<'EOF'\n{nitrogen_config}\nEOF"])
+        await self.run_cmd(["chown", "mrgraf:mrgraf", "/mnt/home/mrgraf/.config/nitrogen/bg-saved.cfg"])
+
+        # Установка yay и AUR пакетов
+        self.set_status("Installing AUR Packages", 90)
+        await self.run_cmd(["bash", "-c", "echo 'mrgraf ALL=(ALL) NOPASSWD: /usr/bin/pacman, /usr/bin/makepkg' > /mnt/etc/sudoers.d/aur-temp"])
+        await self.run_cmd(["chmod", "0440", "/mnt/etc/sudoers.d/aur-temp"])
+        await self.run_cmd(["arch-chroot", "/mnt", "sudo", "-u", "mrgraf", "bash", "-c", "set -e && cd /home/mrgraf && if ! command -v yay >/dev/null 2>&1; then git clone https://aur.archlinux.org/yay.git ~/yay && cd yay && makepkg -si --noconfirm && cd .. && rm -rf yay; fi"])
+        await self.run_cmd(["arch-chroot", "/mnt", "sudo", "-u", "mrgraf", "bash", "-c", "yay -S --noconfirm --needed audacious-gtk3 audacious-plugins-gtk3 autotiling neofetch sublime-text-4"])
+        await self.run_cmd(["rm", "-f", "/mnt/etc/sudoers.d/aur-temp"])
+
+        self.set_status("Finalizing", 100)
+        await self.run_cmd(["umount", "-R", "/mnt"])
 
 if __name__ == "__main__":
     app = InstallerApp()
