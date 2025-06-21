@@ -127,8 +127,8 @@ class InstallerApp(App):
         self.set_status("Монтирование", 10)
         await self.run_cmd(["mount", "/dev/sda2", "/mnt"])
         await self.run_cmd(["mkdir", "-p", "/mnt/boot"])
-        await self.run_cmd(["mkdir", "-p", "/mnt/boot/limine"])
         await self.run_cmd(["mount", "/dev/sda1", "/mnt/boot"])
+        await self.run_cmd(["mkdir", "-p", "/mnt/boot/limine"])
 
         self.set_status("Установка базовых пакетов", 20)
         await self.run_cmd([
