@@ -167,7 +167,12 @@ class InstallerApp(App):
 
         #  Установка и настройка Limine
         # Создаем файл limine.conf локально
-        limine_path = "/mnt/boot/limine/limine.conf"
+        self.set_status("Настройка Limine Bootloader", 40)
+
+        limine_dir = "/mnt/boot/limine"
+        os.makedirs(limine_dir, exist_ok=True)
+
+        limine_path = os.path.join(limine_dir, "limine.conf")
         with open(limine_path, "w", encoding="utf-8") as f:
             f.write(
                 "/+Arch Linux\n"
