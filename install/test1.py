@@ -100,7 +100,7 @@ class InstallerApp(App):
 
         await asyncio.gather(
             read_stream(process.stdout),
-            read_stream(process.stderr, is_err=True),
+            read_stream(process.stderr, iserr=True),
         )
 
         await process.wait()
