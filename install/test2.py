@@ -181,9 +181,9 @@ class InstallerApp(App):
                 "modulepath: boot():/initramfs-linux.img\n"
             )
 
-        await self.run_cmd(["cp", "/usr/share/limine/limine-bios.sys", "/mnt/boot/limine/"])
-        await self.run_cmd(["cp", "/usr/share/limine/limine-bios-cd.bin", "/mnt/boot/limine/"])
-        await self.run_cmd(["cp", "/usr/share/limine/limine-uefi-cd.bin", "/mnt/boot/limine/"])
+        await self.run_cmd(["cp", "/mnt/usr/share/limine/limine-bios.sys", "/mnt/boot/limine/"])
+        await self.run_cmd(["cp", "/mnt/usr/share/limine/limine-bios-cd.bin", "/mnt/boot/limine/"])
+        await self.run_cmd(["cp", "/mnt/usr/share/limine/limine-uefi-cd.bin", "/mnt/boot/limine/"])
 
         await self.run_cmd(["arch-chroot", "/mnt", "limine", "bios-install", "/dev/sda"])
 
