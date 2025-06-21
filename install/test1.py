@@ -53,14 +53,14 @@ class InstallerApp(App):
             await self.run_installation()
             self.set_status("Установка завершена!", 100)
         except Exception as e:
-            self.log(f"[b red]Ошибка установки: {e}[/b red]")
+            self.write_log(f"[b red]Ошибка установки: {e}[/b red]")
 
     def set_status(self, text: str, progress: int) -> None:
         # Обновляет статус установки и прогресс-бар.
         self.status_text.update(f"[b]Текущий этап:[/b] {text}")
         self.progress_bar.progress = progress
 
-    def log(self, text: str) -> None:
+    def write_log(self, text: str) -> None:
         # Добавляет запись в лог и записывает в файл. 
         self.log_view.append_line(text)
         try: #  Добавляем обработку исключений для записи в лог
@@ -72,7 +72,7 @@ class InstallerApp(App):
     async def run_cmd(self, cmd: list, check=True) -> None:
         # Запускает команду в subprocess и логирует вывод. 
         cmdstr = ' '.join(shlex.quote(c) for c in cmd)
-        self.log(f"$ {cmdstr}")
+        self.write_log(f"$ {cmdstr}")
         process = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,
@@ -85,7 +85,7 @@ class InstallerApp(App):
                 try:
                     line = await stream.readline()
                 except Exception as e:
-                    self.log(f"[red]Ошибка чтения потока: {e}[/red]")
+                    self.write_log(f"[red]Ошибка чтения потока: {e}[/red]")
                     break
                 if not line:
                     break
@@ -95,7 +95,7 @@ class InstallerApp(App):
                     text = "[red]Невозможно декодировать вывод[/red]"
                 if iserr:
                     text = f"[red]{text}[/red]"
-                self.log(text)
+                self.write_log(text)
                 await asyncio.sleep(0)
 
         await asyncio.gather(
