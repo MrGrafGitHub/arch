@@ -169,7 +169,7 @@ class InstallerApp(App):
         # Создаем файл limine.conf локально
         await self.set_status("Настройка Limine Bootloader", 40)
 
-        limine_dir = "/mnt/boot/limine"
+        limine_dir = "/boot/limine"
         os.makedirs(limine_dir, exist_ok=True)
 
         limine_path = os.path.join(limine_dir, "limine.conf")
@@ -185,10 +185,10 @@ class InstallerApp(App):
             )
         #  Используем echo для записи в файл, чтобы избежать проблем с интерпретацией символов
         await self.run_cmd(["arch-chroot", "/mnt", "bash", "-c", f"echo \"{limineconf}\" > /boot/limine/limine.conf"])
-        await self.run_cmd(["cp", "/usr/share/limine/limine-bios.sys", "/mnt/boot/limine/"])
-        await self.run_cmd(["cp", "/usr/share/limine/limine-bios-cd.bin", "/mnt/boot/limine/"])
-        await self.run_cmd(["cp", "/usr/share/limine/limine-uefi-cd.bin", "/mnt/boot/limine/"])
-        await self.run_cmd(["arch-chroot", "/mnt", "limine", "bios-install", "/dev/sda"])
+        await self.run_cmd(["cp", "/usr/share/limine/limine-bios.sys", "/boot/limine/"])
+        await self.run_cmd(["cp", "/usr/share/limine/limine-bios-cd.bin", "/boot/limine/"])
+        await self.run_cmd(["cp", "/usr/share/limine/limine-uefi-cd.bin", "/boot/limine/"])
+        await self.run_cmd(["arch-chroot", "/boot", "limine", "bios-install", "/dev/sda"])
 
         #  Установка менеджера входа ly
         self.set_status("Настройка Display Manager", 50)
