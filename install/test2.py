@@ -169,7 +169,7 @@ class InstallerApp(App):
         # Создаем файл limine.conf локально
         await self.set_status("Настройка Limine Bootloader", 40)
 
-        limine_dir = "/boot/limine"
+        limine_dir = "/mnt/boot/limine"
         os.makedirs(limine_dir, exist_ok=True)
 
         limine_path = os.path.join(limine_dir, "limine.conf")
