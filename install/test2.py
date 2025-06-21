@@ -6,15 +6,19 @@ import asyncio
 import shlex
 import os #   Импортируем модуль os для проверки существования файлов
 
-class LogView(Static):
-    """
-    # Виджет для отображения логов установки.
-    """
-    def append_line (self, line: str) -> None:
-        # Добавляет строку в лог и прокручивает в конец.
-        new_text = f"{self.renderable}\n{line}" if self.renderable else line
-        self.update(new_text)
-        self.scroll_end(animate=False)
+   class LogView(Static):
+       def __init__(self, **kwargs):
+           super().__init__(**kwargs)
+           self.lines = []
+
+       def append_line(self, line: str) -> None:
+           self.lines.append(line)
+           # Храним максимум строк (например, 100), чтобы не раздувать память
+           if len(self.lines) > 100:
+               self.lines.pop(0)
+           self.update("\n".join(self.lines))
+           # Авто-прокрутка (если нужна, зависит от контейнера и текстового рендера)
+           self.scroll_end(animate=False)
 
 class InstallerApp(App):
     
@@ -39,14 +43,14 @@ class InstallerApp(App):
 
     def compose(self) -> ComposeResult:
         # Создает элементы интерфейса.
-        yield TextLog(id="log")
+        yield LogView(id="log")
         with Vertical(id="status"):
             yield Static("[b]Текущий этап установки[/b]", id="status-text")
             yield ProgressBar(total=100, id="progress-bar")
 
     async def on_mount(self) -> None:
         # Выполняется при монтировании приложения. 
-        self.log_view = self.query_one ("#log", TextLog)
+        self.log_view = self.query_one ("#log", LogView)
         self.status_text = self.query_one ("#status-text", Static)
         self.progress_bar = self.query_one ("#progress-bar", ProgressBar)
     
