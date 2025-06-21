@@ -6,19 +6,19 @@ import asyncio
 import shlex
 import os #   Импортируем модуль os для проверки существования файлов
 
-   class LogView(Static):
-       def __init__(self, **kwargs):
-           super().__init__(**kwargs)
-           self.lines = []
+class LogView(Static):
+   def __init__(self, **kwargs):
+      super().__init__(**kwargs)
+      self.lines = []
 
-       def append_line(self, line: str) -> None:
-           self.lines.append(line)
-           # Храним максимум строк (например, 100), чтобы не раздувать память
-           if len(self.lines) > 100:
-               self.lines.pop(0)
-           self.update("\n".join(self.lines))
-           # Авто-прокрутка (если нужна, зависит от контейнера и текстового рендера)
-           self.scroll_end(animate=False)
+   def append_line(self, line: str) -> None:
+      self.lines.append(line)
+      # Храним максимум строк (например, 100), чтобы не раздувать память
+      if len(self.lines) > 100:
+         self.lines.pop(0)
+      self.update("\n".join(self.lines))
+      # Авто-прокрутка (если нужна, зависит от контейнера и текстового рендера)
+      self.scroll_end(animate=False)
 
 class InstallerApp(App):
     
