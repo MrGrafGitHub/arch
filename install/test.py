@@ -73,6 +73,7 @@ class InstallerApp(App):
                 if is_err:
                     text = f"Error: {text}"
                 self.log_view.append_line(text)
+                self.refresh()  # просто вызов, без await
                 await asyncio.sleep(0)  # Yield control to allow UI updates
 
         try:
@@ -86,6 +87,7 @@ class InstallerApp(App):
         await process.wait()
 
     async def create_partitions(self) -> None:
+        self.set_status("Monitoring Partitions", 5)
         bash_script = """
         # Разметка с ext4 /boot
         echo -e "\n\033[1;32mРазметка с ext4 /boot fat32\033[0m"
