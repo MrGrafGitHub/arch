@@ -39,14 +39,14 @@ class InstallerApp(App):
 
     def compose(self) -> ComposeResult:
         # Создает элементы интерфейса.
-        yield LogView(id="log")
+        yield TextLog(id="log")
         with Vertical(id="status"):
             yield Static("[b]Текущий этап установки[/b]", id="status-text")
             yield ProgressBar(total=100, id="progress-bar")
 
     async def on_mount(self) -> None:
         # Выполняется при монтировании приложения. 
-        self.log_view = self.query_one ("#log", LogView)
+        self.log_view = self.query_one ("#log", TextLog)
         self.status_text = self.query_one ("#status-text", Static)
         self.progress_bar = self.query_one ("#progress-bar", ProgressBar)
     
@@ -162,17 +162,18 @@ class InstallerApp(App):
         await self.run_cmd(["arch-chroot", "/mnt", "pacman", "-Syu", "--noconfirm"])
 
         #  Установка и настройка Limine
-        self.set_status("Настройка Limine Bootloader", 40)
-        await self.run_cmd(["mkdir", "-p", "/mnt/boot/limine"])
-        limineconf = (
-            "/+Arch Linux\n"
-            "comment: loader linux\n"
-            "//Linux\n"
-            "protocol: linux\n"
-            "path: boot():/vmlinuz-linux\n"
-            "cmdline: root=LABEL=root rw quiet\n"
-            "modulepath: boot():/initramfs-linux.img"
-        )
+        # Создаем файл limine.conf локально
+        limine_path = "/mnt/boot/limine/limine.conf"
+        with open(limine_path, "w", encoding="utf-8") as f:
+            f.write(
+                "/+Arch Linux\n"
+                "comment: loader linux\n"
+                "//Linux\n"
+                "protocol: linux\n"
+                "path: boot():/vmlinuz-linux\n"
+                "cmdline: root=LABEL=root rw quiet\n"
+                "modulepath: boot():/initramfs-linux.img\n"
+            )
         #  Используем echo для записи в файл, чтобы избежать проблем с интерпретацией символов
         await self.run_cmd(["arch-chroot", "/mnt", "bash", "-c", f"echo \"{limineconf}\" > /boot/limine/limine.conf"])
         await self.run_cmd(["cp", "/usr/share/limine/limine-bios.sys", "/mnt/boot/limine/"])
