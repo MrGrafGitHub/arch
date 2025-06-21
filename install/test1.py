@@ -229,7 +229,7 @@ class InstallerApp(App):
         await self.run_cmd(["chown", "mrgraf:mrgraf", "/mnt/home/mrgraf/.config/nitrogen/bg-saved.cfg"])
 
         #  Установка yay и AUR пакетов
-        self.setstatus("Установка AUR пакетов", 90)
+        self.set_status("Установка AUR пакетов", 90)
         #  Создаем временный файл sudoers для пользователя mrgraf
         await self.run_cmd(["arch-chroot", "/mnt", "bash", "-c", "echo 'mrgraf ALL=(ALL) NOPASSWD: /usr/bin/pacman, /usr/bin/makepkg' > /etc/sudoers.d/aur-temp"])
         await self.run_cmd(["arch-chroot", "/mnt", "chmod", "0440", "/etc/sudoers.d/aur-temp"])
