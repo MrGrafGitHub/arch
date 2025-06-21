@@ -175,7 +175,6 @@ class InstallerApp(App):
             await self.write_log(f"[red]Ошибка при создании limine.conf: {e}[/red]")
             raise
 
-        
         await self.set_status("Limine: создание конфига", 40)
         limine_path = os.path.join(limine_dir, "limine.conf")
         with open(limine_path, "w", encoding="utf-8") as f:
@@ -188,12 +187,12 @@ class InstallerApp(App):
                 "cmdline: root=LABEL=root rw quiet\n"
                 "modulepath: boot():/initramfs-linux.img\n"
             )
-        #  Используем echo для записи в файл, чтобы избежать проблем с интерпретацией символов
-        await self.run_cmd(["arch-chroot", "/mnt", "bash", "-c", f"echo \"limine.conf\" > /boot/limine/limine.conf"])
+
         await self.run_cmd(["cp", "/usr/share/limine/limine-bios.sys", "/mnt/boot/limine/"])
         await self.run_cmd(["cp", "/usr/share/limine/limine-bios-cd.bin", "/mnt/boot/limine/"])
         await self.run_cmd(["cp", "/usr/share/limine/limine-uefi-cd.bin", "/mnt/boot/limine/"])
-        await self.run_cmd(["arch-chroot", "/mnt/boot", "limine", "bios-install", "/dev/sda"])
+
+        await self.run_cmd(["arch-chroot", "/mnt", "limine", "bios-install", "/dev/sda"])
 
         #  Установка менеджера входа ly
         self.set_status("Настройка Display Manager", 50)
