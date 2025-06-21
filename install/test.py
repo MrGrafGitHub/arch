@@ -44,7 +44,6 @@ class InstallerApp(App):
             ("Monitoring Partitions", self.monitor_partitions),
             ("Installing Base Packages", self.install_base_packages),
             ("Configuring System", self.configure_system),
-            ("Finishing Installation", self.finish_installation),
         ]
 
         for step_name, step_function in steps:
