@@ -127,6 +127,7 @@ class InstallerApp(App):
         self.set_status("Монтирование", 10)
         await self.run_cmd(["mount", "/dev/sda2", "/mnt"])
         await self.run_cmd(["mkdir", "-p", "/mnt/boot"])
+        await self.run_cmd(["mkdir", "-p", "/mnt/boot/limine"])
         await self.run_cmd(["mount", "/dev/sda1", "/mnt/boot"])
 
         self.set_status("Установка базовых пакетов", 20)
@@ -167,9 +168,6 @@ class InstallerApp(App):
 
         #  Установка и настройка Limine
         # Создаем файл limine.conf локально
-        await self.set_status("Limine: Проверка директории", 38)
-        await self.run_cmd(["arch-chroot", "/mnt", "mkdir", "-p", "/boot/limine"])
-
         await self.set_status("Limine: создание конфига", 40)
         # limine_path = os.path.join(limine_dir, "limine.conf")
         limine_path = "/mnt/boot/limine"
