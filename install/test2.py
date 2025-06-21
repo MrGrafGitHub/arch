@@ -167,7 +167,7 @@ class InstallerApp(App):
         await self.run_cmd(["arch-chroot", "/mnt", "pacman", "-Syu", "--noconfirm"])
 
         #  Установка и настройка Limine
-        await self.set_status("Limine: загрузка конфига с гитхаба", 40)
+        self.set_status("Limine: загрузка конфига с гитхаба", 40)
 
         limine_path = "https://github.com/MrGrafGitHub/arch/raw/main/configs/limine.conf"
         await self.run_cmd(["wget", "-q", "-O", "/mnt/boot/limine/limine.conf", limine_path])
