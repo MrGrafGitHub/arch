@@ -74,7 +74,7 @@ class InstallerApp(App):
         cmdstr = ' '.join(shlex.quote(c) for c in cmd)
         self.log(f"$ {cmdstr}")
         process = await asyncio.create_subprocess_exec(
-            cmd,
+            *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
