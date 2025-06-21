@@ -45,17 +45,19 @@ class InstallerApp(App):
             yield ProgressBar(total=100, id="progress-bar")
 
     async def on_mount(self) -> None:
-        await super().on_mount()  # Вызов базового метода
         # Выполняется при монтировании приложения. 
         self.log_view = self.query_one ("#log", LogView)
         self.status_text = self.query_one ("#status-text", Static)
         self.progress_bar = self.query_one ("#progress-bar", ProgressBar)
-        try:
-            # Запуск установки в фоне, не блокируя UI
-            asyncio.create_task(self.run_installation())
-            self.set_status("Установка завершена!", 100)
-        except Exception as e:
-            self.write_log(f"[b red]Ошибка установки: {e}[/b red]")
+    
+        async def install_wrapper():
+            try:
+                await self.run_installation()
+                self.set_status("Установка завершена!", 100)
+            except Exception as e:
+                self.write_log(f"[b red]Ошибка установки: {e}[/b red]")
+
+        asyncio.create_task(install_wrapper())
 
     def set_status(self, text: str, progress: int) -> None:
         # Обновляет статус установки и прогресс-бар.
