@@ -167,10 +167,18 @@ class InstallerApp(App):
         await self.run_cmd(["arch-chroot", "/mnt", "pacman", "-Syu", "--noconfirm"])
 
         #  Установка и настройка Limine
-        self.set_status("Limine: загрузка конфига с гитхаба", 40)
-
-        limine_path = "https://github.com/MrGrafGitHub/arch/raw/main/configs/limine.conf"
-        await self.run_cmd(["wget", "-q", "-O", "/mnt/boot/limine/limine.conf", limine_path])
+        self.set_status("Limine: создание конфига", 40)
+        limine_path = os.path.join(limine_dir, "limine.conf")
+        with open(limine_path, "w", encoding="utf-8") as f:
+            f.write(
+                "/+Arch Linux\n"
+                "comment: loader linux\n"
+                "//Linux\n"
+                "protocol: linux\n"
+                "path: boot():/vmlinuz-linux\n"
+                "cmdline: root=LABEL=root rw quiet\n"
+                "modulepath: boot():/initramfs-linux.img\n"
+            )
 
         await self.run_cmd(["cp", "/usr/share/limine/limine-bios.sys", "/mnt/boot/limine/"])
         await self.run_cmd(["cp", "/usr/share/limine/limine-bios-cd.bin", "/mnt/boot/limine/"])
