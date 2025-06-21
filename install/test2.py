@@ -168,7 +168,7 @@ class InstallerApp(App):
         #  Установка и настройка Limine
         # Создаем файл limine.conf локально
         await self.set_status("Limine: Проверка директории", 38)
-        await self.run_cmd(["mkdir", "-p", "/mnt/boot/limine"])
+        await self.run_cmd(["arch-chroot", "/mnt", "mkdir", "-p", "/boot/limine"])
 
         await self.set_status("Limine: создание конфига", 40)
         limine_path = os.path.join(limine_dir, "limine.conf")
