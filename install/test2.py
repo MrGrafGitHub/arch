@@ -168,6 +168,7 @@ class InstallerApp(App):
 
         #  Установка и настройка Limine
         self.set_status("Limine: создание конфига", 40)
+        limine_dir = "/mnt/boot/limine"
         limine_path = os.path.join(limine_dir, "limine.conf")
         with open(limine_path, "w", encoding="utf-8") as f:
             f.write(
