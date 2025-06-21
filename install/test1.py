@@ -64,7 +64,7 @@ class InstallerApp(App):
     def log(self, text: str) -> None:
         # Добавляет запись в лог и записывает в файл. 
         self.logview.appendline(text)
-        try:  Добавляем обработку исключений для записи в лог
+        try: #  Добавляем обработку исключений для записи в лог
             with open("/tmp/installer.log", "a") as f:
                 f.write(text + "\n")
         except Exception as e:
