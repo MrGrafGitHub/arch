@@ -45,13 +45,20 @@ echo "HOME: $HDD_HOME"
 echo "GAMES: $HDD_GAMES"
 echo "MEDIA (NTFS): $HDD_MEDIA"
 
-### --- Разметка и форматирование ---
-echo -e "\n\033[1;32m=== Размечаем и форматируем SSD ===\033[0m"
+### --- Разметка и форматирование (BIOS+GPT) ---
+echo -e "\n\033[1;32m=== Размечаем и форматируем SSD (BIOS+GPT) ===\033[0m"
 parted -s "$SSD" mklabel gpt
-parted -s "$SSD" mkpart primary fat32 1MiB 300MiB
-parted -s "$SSD" mkpart primary ext4 300MiB 100%
-mkfs.fat -F32 -n BOOT "${SSD}1"
-mkfs.ext4 -L ROOT "${SSD}2"
+parted -s "$SSD" mkpart primary 1MiB 2MiB
+parted -s "$SSD" set 1 bios_grub on
+parted -s "$SSD" mkpart primary fat32 2MiB 302MiB
+parted -s "$SSD" mkpart primary ext4 302MiB 100%
+mkfs.fat -F32 -n BOOT "${SSD}2"
+mkfs.ext4 -L ROOT "${SSD}3"
+
+mount "${SSD}3" /mnt
+mkdir -p /mnt/boot
+mount "${SSD}2" /mnt/boot
+
 
 echo -e "\n\033[1;32m=== Размечаем и форматируем HOME ===\033[0m"
 parted -s "$HDD_HOME" mklabel gpt
