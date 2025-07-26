@@ -1,10 +1,13 @@
 #!/bin/bash
 set -e
 
-echo -e "\n\033[1;33m=== Выберите режим установки ===\033[0m"
-echo "1) BIOS (GPT с bios_grub)"
-echo "2) UEFI (GPT с ESP)"
-read -p "Введите 1 или 2: " MODE
+if [ -d /sys/firmware/efi ]; then
+    MODE="2"  # UEFI
+    echo -e "\033[1;32mОбнаружен режим UEFI. Устанавливаем как UEFI.\033[0m"
+else
+    MODE="1"  # BIOS
+    echo -e "\033[1;33mОбнаружен режим BIOS (Legacy). Устанавливаем как BIOS.\033[0m"
+fi
 
 if [[ "$MODE" != "1" && "$MODE" != "2" ]]; then
     echo -e "\033[1;31mОшибка: нужно выбрать 1 или 2.\033[0m"
