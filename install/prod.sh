@@ -112,6 +112,7 @@ cat "$FSTAB"
 # --- Установка базовой системы ---
 echo -e "\n\033[1;32m Установка базовой системы \033[0m"
 pacstrap /mnt base base-devel linux linux-headers linux-firmware limine nano networkmanager sudo git \
+nvidia nvidia-utils \
 xorg-server xorg-xinit  dbus wget \
 xfconf xfce4-notifyd xfce4-settings \
 network-manager-applet ttf-font-awesome \
