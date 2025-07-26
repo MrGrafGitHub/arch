@@ -20,7 +20,7 @@ for entry in "${DISKS[@]}"; do
     if [ "$SIZE" -lt $((500*1024*1024*1024)) ]; then
         SSD="$DEV"
     elif [ "$SIZE" -gt $((500*1024*1024*1024)) ] && [ "$SIZE" -lt $((2*1024*1024*1024*1024)) ]; then
-        if [ -z "$USED" ] || [ "$USED" = "0B" ]; then
+        if [ -z "$USED" ] || [ "$USED" = "0" ] || [ "$USED" = "0B" ]; then
             if [ -z "$HDD_HOME" ]; then
                 HDD_HOME="$DEV"
             else
