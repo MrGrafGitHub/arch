@@ -20,7 +20,13 @@ HDD_GAMES=""
 HDD_MEDIA=""
 
 # Определяем устройство, с которого загружена система
-BOOT_DEV=$(lsblk -no pkname "$(findmnt -n -o SOURCE /)")
+if mountpoint -q /run/archiso/bootmnt; then
+    # В ArchISO реальный носитель смонтирован сюда
+    BOOT_DEV=$(lsblk -no pkname "$(findmnt -n -o SOURCE /run/archiso/bootmnt)")
+else
+    # Если не live-режим — берём обычный root
+    BOOT_DEV=$(lsblk -no pkname "$(findmnt -n -o SOURCE /)")
+fi
 
 for entry in "${DISKS[@]}"; do
     DEV=$(echo "$entry" | awk '{print $1}')
