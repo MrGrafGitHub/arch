@@ -19,8 +19,23 @@ HDD_HOME=""
 HDD_GAMES=""
 HDD_MEDIA=""
 
+# Определяем устройство, с которого загружена система
+BOOT_DEV=$(lsblk -no pkname "$(findmnt -n -o SOURCE /)")
+
 for entry in "${DISKS[@]}"; do
     DEV=$(echo "$entry" | awk '{print $1}')
+    FSTYPE=$(lsblk -dn -o FSTYPE "$DEV")
+
+    # Пропускаем загрузочный диск и iso-образы
+    if [[ "$DEV" == "/dev/$BOOT_DEV" ]]; then
+        echo "Пропущено устройство: $DEV (загрузочный диск)"
+        continue
+    fi
+    if [[ "$FSTYPE" == "iso9660" ]]; then
+        echo "Пропущено устройство: $DEV (тип файловой системы: iso9660)"
+        continue
+    fi
+
     SIZE=$(echo "$entry" | awk '{print $2}')
     USED=$(lsblk -dn -o FSUSED "$DEV" | tr -d '[:space:]')
 
