@@ -17,7 +17,6 @@ mapfile -t DISKS < <(lsblk -dn -o NAME,SIZE -b | awk '{print "/dev/"$1 " " $2}')
 SSD=""
 HDD_HOME=""
 HDD_GAMES=""
-HDD_MEDIA=""
 
 
 for entry in "${DISKS[@]}"; do
@@ -37,6 +36,12 @@ for entry in "${DISKS[@]}"; do
         continue
     fi
 
+    if [ "$SIZE" -gt $((2*1024*1024*1024*1024)) ]; then
+    # Для медиа-диска не проверяем USED, так как он может быть не отформатирован
+    echo "Пропущено устройство: $DEV (mount later: $((SIZE / 1024 / 1024 / 1024 / 1024)) ГБ)"
+        continue
+    fi
+
     USED=$(lsblk -dn -o FSUSED "$DEV" | tr -d '[:space:]')
 
     if [ "$SIZE" -lt $((500*1024*1024*1024)) ]; then
@@ -51,40 +56,21 @@ elif [ "$SIZE" -gt $((500*1024*1024*1024)) ] && [ "$SIZE" -lt $((2*1024*1024*102
     else
         HDD_GAMES="$DEV"
     fi
-elif [ "$SIZE" -gt $((2*1024*1024*1024*1024)) ]; then
-    # Для медиа-диска не проверяем USED, так как он может быть не отформатирован
-    if [ -z "$HDD_MEDIA" ]; then
-        HDD_MEDIA="$DEV"
-    fi
-fi
 
 if [[ -z "$SSD" || -z "$HDD_HOME" || -z "$HDD_GAMES" ]]; then
     echo -e "\033[1;31mОшибка: не удалось определить обязательные диски (SSD, HOME, GAMES). Проверь разметку!\033[0m"
     exit 1
 fi
 
-# HDD_MEDIA не обязателен для работы системы
-if [ -z "$HDD_MEDIA" ]; then
-    echo -e "\033[1;33mПредупреждение: медиа-диск не найден, некоторые функции будут недоступны\033[0m"
-fi
 
 
 echo "SSD: $SSD"
 echo "HOME: $HDD_HOME"
 echo "GAMES: $HDD_GAMES"
 echo "MEDIA (NTFS): $HDD_MEDIA"
+echo "lsblk"
 
 # --- Разметка SSD ---
-if [[ "$MODE" == "BIOS" ]]; then
-    echo -e "\n\033[1;32m=== Размечаем SSD (BIOS+GPT) ===\033[0m"
-    parted -s "$SSD" mklabel gpt
-    parted -s "$SSD" mkpart primary 1MiB 2MiB
-    parted -s "$SSD" set 1 bios_grub on
-    parted -s "$SSD" mkpart primary fat32 2MiB 302MiB
-    parted -s "$SSD" mkpart primary ext4 302MiB 100%
-    BOOT_PART="${SSD}2"
-    ROOT_PART="${SSD}3"
-else
     echo -e "\n\033[1;32m=== Размечаем SSD (UEFI+GPT) ===\033[0m"
     parted -s "$SSD" mklabel gpt
     parted -s "$SSD" mkpart primary fat32 1MiB 301MiB
@@ -92,7 +78,7 @@ else
     parted -s "$SSD" mkpart primary ext4 301MiB 100%
     BOOT_PART="${SSD}1"
     ROOT_PART="${SSD}2"
-fi
+
 
 # Проверка что разделы созданы
 lsblk "$SSD" | grep -q "$(basename $BOOT_PART)" || { echo "Ошибка: раздел BOOT не создан"; exit 1; }
@@ -123,14 +109,6 @@ mkfs.ext4 -L GAMES "${HDD_GAMES}1"
 mkdir -p /mnt/games
 mount "${HDD_GAMES}1" /mnt/games
 
-# --- MEDIA ---
-echo -e "\n\033[1;32m=== Монтируем 4ТБ NTFS ===\033[0m"
-mkdir -p /mnt/media
-if ! blkid -s LABEL -o value "$HDD_MEDIA" | grep -q .; then
-    ntfslabel "$HDD_MEDIA" MEDIA
-fi
-mount -t ntfs-3g "$HDD_MEDIA" /mnt/media -o uid=1000,gid=1000,noatime
-
 # --- FSTAB ---
 echo -e "\n\033[1;32m=== Генерируем fstab ===\033[0m"
 FSTAB="/mnt/etc/fstab"
@@ -144,7 +122,6 @@ add_fstab_entry "ROOT" "/" "ext4" "defaults,noatime" 0 1
 add_fstab_entry "BOOT" "/boot" "vfat" "defaults" 0 2
 add_fstab_entry "HOME" "/home" "ext4" "defaults,noatime" 0 2
 add_fstab_entry "GAMES" "/games" "ext4" "defaults,noatime" 0 2
-add_fstab_entry "MEDIA" "/media" "ntfs-3g" "uid=1000,gid=1000,defaults,noatime" 0 0
 
 cat "$FSTAB"
 
@@ -201,14 +178,8 @@ cmdline: root=LABEL=ROOT rw quiet
 module_path: boot():/initramfs-linux.img
 EOF
 
-if [[ "$MODE" == "BIOS" ]]; then
-    cp /usr/share/limine/limine-bios.sys /boot/limine/
-    cp /usr/share/limine/limine-bios-cd.bin /boot/limine/
-    cp /usr/share/limine/limine-uefi-cd.bin /boot/limine/
-    limine bios-install "$SSD"
-else
-    limine-install --efi-directory=/boot
-fi
+limine-install --efi-directory=/boot
+
 
 pacman -Sy --noconfirm ly
 systemctl enable ly
