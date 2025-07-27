@@ -40,25 +40,32 @@ for entry in "${DISKS[@]}"; do
     USED=$(lsblk -dn -o FSUSED "$DEV" | tr -d '[:space:]')
 
     if [ "$SIZE" -lt $((500*1024*1024*1024)) ]; then
-        SSD="$DEV"
-    elif [ "$SIZE" -gt $((500*1024*1024*1024)) ] && [ "$SIZE" -lt $((2*1024*1024*1024*1024)) ]; then
-        if [ -z "$USED" ] || [ "$USED" = "0" ] || [ "$USED" = "0B" ]; then
-            if [ -z "$HDD_HOME" ]; then
-                HDD_HOME="$DEV"
-            else
-                HDD_GAMES="$DEV"
-            fi
+    SSD="$DEV"
+elif [ "$SIZE" -gt $((500*1024*1024*1024)) ] && [ "$SIZE" -lt $((2*1024*1024*1024*1024)) ]; then
+    if [ -z "$USED" ] || [ "$USED" = "0" ] || [ "$USED" = "0B" ]; then
+        if [ -z "$HDD_HOME" ]; then
+            HDD_HOME="$DEV"
         else
             HDD_GAMES="$DEV"
         fi
-    elif [ "$SIZE" -gt $((2*1024*1024*1024*1024)) ]; then
+    else
+        HDD_GAMES="$DEV"
+    fi
+elif [ "$SIZE" -gt $((2*1024*1024*1024*1024)) ]; then
+    # Для медиа-диска не проверяем USED, так как он может быть не отформатирован
+    if [ -z "$HDD_MEDIA" ]; then
         HDD_MEDIA="$DEV"
     fi
-done
+fi
 
-if [[ -z "$SSD" || -z "$HDD_HOME" || -z "$HDD_GAMES" || -z "$HDD_MEDIA" ]]; then
-    echo -e "\033[1;31mОшибка: не удалось определить все диски. Проверь разметку!\033[0m"
+if [[ -z "$SSD" || -z "$HDD_HOME" || -z "$HDD_GAMES" ]]; then
+    echo -e "\033[1;31mОшибка: не удалось определить обязательные диски (SSD, HOME, GAMES). Проверь разметку!\033[0m"
     exit 1
+fi
+
+# HDD_MEDIA не обязателен для работы системы
+if [ -z "$HDD_MEDIA" ]; then
+    echo -e "\033[1;33mПредупреждение: медиа-диск не найден, некоторые функции будут недоступны\033[0m"
 fi
 
 
