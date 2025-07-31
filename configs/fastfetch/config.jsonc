@@ -1,0 +1,186 @@
+// Load with --load-config examples/2.jsonc
+// Note that you must replace the image path to an existing image to display it.
+
+{
+    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+      "logo": {
+    "type": "kitty",
+    "source": "/home/mrgraf/YandexCloud/linux/img/logo1.png",
+    "width": 30,
+            "padding": {
+            "top": 4,
+            "right": 5,
+            "left": 5
+        }
+  },
+    "display": {
+        "separator": " ",
+        "constants": [
+            "──────────────────────────────"
+        ]
+    },
+    "modules": [
+        // ╭OS block
+    {
+      "type": "os",
+      "key": "╭OS",
+      "keyColor": "blue",
+      "format": "Arch",
+      "outputColor":"cyan"
+    },
+    {
+      "type": "packages",
+      "key": "┝Packages",
+      "keyColor": "blue",
+      "outputColor":"cyan"
+    },
+    {
+      "type": "shell",
+      "key": "┝Shell",
+      "keyColor": "blue",
+      "outputColor":"cyan"
+    },
+    {
+      "type": "kernel",
+      "key": "╰Kernel",
+      "keyColor": "blue",
+      "outputColor":"cyan"
+    },
+    "break",
+
+    // ╭User block
+    {
+      "type": "users",
+      "key": "╭User ",
+      "keyColor": "blue",
+      "format": "{name}",
+      "outputColor":"cyan"
+    },
+    {
+      "type": "player", 
+      "key": "┝Player",
+      "keyColor": "blue",
+      "outputColor":"cyan"
+    },
+    {
+      "type": "media", 
+      "key": "┝Song",
+      "keyColor": "blue",
+      "format": "{title} - {artist}",
+      "outputColor":"cyan"
+    },
+    {
+      "type": "sound",
+      "key": "┝Sound output",
+      "keyColor": "blue",
+      "outputColor":"cyan",
+      "format": "{name}",
+      
+    },
+    {
+      "type": "terminal",
+      "key": "╰Terminal",
+      "keyColor": "blue",
+      "outputColor":"cyan"
+    },
+    "break",
+    // ╭WM block
+    {
+      "type": "wm",
+      "key": "╭WM",
+      "keyColor": "blue",
+      "outputColor":"cyan"
+    },
+    {
+    "type": "command",
+    "key": "┝Theme",
+    "keyColor": "blue",
+    "shell": "/bin/bash",
+    "param": "-c",
+    "text": "xfconf-query -c xsettings -p /Net/ThemeName",
+    "outputColor":"cyan"
+    },
+    {
+    "type": "command",
+    "key": "┝Icons",
+    "keyColor": "blue",
+    "shell": "/bin/bash",
+    "param": "-c",
+    "text": "xfconf-query -c xsettings -p /Net/IconThemeName",
+    "outputColor":"cyan"
+    },
+    {
+      "type": "terminalfont",
+      "key": "╰Font",
+      "keyColor": "blue",
+      "outputColor":"cyan"
+    },
+    "break",
+    // ╭Host block
+    {
+      "type": "host",
+      "key": "╭Host",
+      "keyColor": "blue",
+      "outputColor":"cyan",
+      "format": " {name} {family}"
+    },
+    {
+      "type": "cpu",
+      "key": "┝CPU",
+      "keyColor": "blue",
+      "outputColor":"cyan",
+      "format": "{name}"
+    },
+    {
+      "type": "gpu",
+      "key": "┝GPU",
+      "keyColor": "blue",
+      "outputColor":"cyan",
+      "format": "{name}"
+    },
+    {
+      "type": "display",
+      "key": "┝Resolution",
+      "keyColor": "blue",
+      "outputColor":"cyan",
+      "format": "{width}x{height}",
+      "compact": false
+    },
+    {
+      "type": "memory",
+      "key": "┝RAM",
+      "keyColor": "blue",
+      "outputColor":"cyan",
+      "format": "{used} / {total} ({percentage})"
+    },
+    {
+      "type": "disk",
+      "key": "┝Disk",
+      "keyColor": "blue",
+      "outputColor":"cyan",
+      "folders": ["/", "/home", "/Other", "/Media"],
+      "format": "({mountpoint})  {size-used} / {size-total} ({size-percentage})"
+    },
+    {
+      "type": "uptime",
+      "key": "╰Uptime",
+      "keyColor": "blue",
+      "outputColor":"cyan"
+    },
+        "break",
+        {
+            "type": "custom",
+            "format": "┌{$1}{$1}┐",
+            "outputColor": "90"
+        },
+        {
+            "type": "custom",
+            "format": " {#90}  {#31}  {#32}  {#33}  {#34}  {#35}  {#36}  {#37}  {#38}  {#39}       {#38}  {#37}  {#36}  {#35}  {#34}  {#33}  {#32}  {#31}  {#90}"
+        },
+        {
+            "type": "custom",
+            "format": "└{$1}{$1}┘",
+            "outputColor": "90"
+        },
+    ]
+}
